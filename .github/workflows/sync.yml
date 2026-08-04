@@ -1,0 +1,26 @@
+name: Sync Live Prices from SharePoint
+
+on:
+  repository_dispatch:
+    types: [build, price_update]
+  workflow_dispatch:
+
+jobs:
+  sync-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update prices.json from payload or master excel
+        run: |
+          if [ -n "${{ github.event.client_payload.json }}" ]; then
+            echo '${{ github.event.client_payload.json }}' > netlify/prices.json
+          fi
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "Skyspan Pricing Bot"
+          git config --global user.email "pricing-bot@skyspan.com.au"
+          git add netlify/prices.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update prices.json from SharePoint flow" && git push)
