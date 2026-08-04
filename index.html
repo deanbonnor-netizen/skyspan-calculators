@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSA Glass Roof Calculator — Skyspan</title>
+<style>
+  :root {
+    --ink: #1a2b33;
+    --ink-soft: #4a5d66;
+    --ink-faint: #8499a3;
+    --line: #dde6ea;
+    --line-soft: #eef3f5;
+    --bg: #f6f8f9;
+    --card: #ffffff;
+    --sky: #0a7ea4;
+    --sky-soft: #e3f1f6;
+    --teal: #1f8a70;
+    --teal-soft: #e2f1ec;
+    --amber: #b06f00;
+    --amber-soft: #fbefda;
+    --red: #b3261e;
+    --red-soft: #fbe6e4;
+    --fall: #d85a30;
+    --radius: 10px;
+    --radius-sm: 7px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 12px 14px 40px; width: 100%; }
+
+  header.top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 4px;
+  }
+  .title-block h1 {
+    font-size: 22px; font-weight: 650; letter-spacing: -0.01em; margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .title-block .sub { font-size: 13px; color: var(--ink-faint); margin-top: 2px; }
+  .verified {
+    font-size: 11px; color: var(--teal); background: var(--teal-soft);
+    padding: 4px 10px; border-radius: 100px; font-weight: 600; white-space: nowrap;
+  }
+
+  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; margin-top: 24px; align-items: start; }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .panel h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--ink-faint); font-weight: 650; margin: 0 0 16px;
+  }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .field-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 12px; color: var(--ink-soft); font-weight: 550; }
+  label .unit { color: var(--ink-faint); font-weight: 400; }
+  input, select {
+    font: inherit; font-size: 14px; color: var(--ink);
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 9px 11px; background: #fff; width: 100%;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--sky);
+    box-shadow: 0 0 0 3px var(--sky-soft);
+  }
+  .hint { font-size: 11.5px; color: var(--ink-faint); }
+
+  /* compliance flag */
+  .flag {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    font-size: 13px; margin-bottom: 16px; line-height: 1.45;
+  }
+  .flag.ok { background: var(--teal-soft); color: #146351; }
+  .flag.warn { background: var(--amber-soft); color: var(--amber); }
+  .flag.fail { background: var(--red-soft); color: var(--red); }
+  .flag .ic { font-size: 16px; line-height: 1.2; flex-shrink: 0; }
+  .flag .fix-btn {
+    margin-top: 8px; font: inherit; font-size: 12px; font-weight: 600;
+    background: #fff; border: 1px solid currentColor; color: inherit;
+    padding: 5px 11px; border-radius: 6px; cursor: pointer; opacity: 0.9;
+  }
+  .flag .fix-btn:hover { opacity: 1; }
+
+  /* schematic */
+  .schematic { margin: 0 0 18px; }
+  .schematic svg { width: 100%; height: auto; display: block; }
+
+  /* metrics */
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+  .metric { background: var(--bg); border-radius: var(--radius-sm); padding: 11px 13px; }
+  .metric .k { font-size: 11px; color: var(--ink-faint); margin-bottom: 3px; }
+  .metric .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* price summary */
+  .price-line { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13.5px; }
+  .price-line .lbl { color: var(--ink-soft); }
+  .price-line .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .price-line.sub { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; }
+  .cost-total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0 4px; border-top: 2px solid var(--ink); margin-top: 8px; }
+  .cost-total .lbl { font-weight: 600; }
+  .cost-total .amt { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* margin table */
+  .margins { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+  .margins table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .margins th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); font-weight: 600; padding: 9px 13px; background: var(--bg); }
+  .margins th.r, .margins td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .margins td { padding: 9px 13px; border-top: 1px solid var(--line-soft); }
+  .margins tr.highlight td { background: var(--sky-soft); font-weight: 650; }
+  .margins tr:hover td { background: var(--line-soft); }
+  .margins tr.highlight:hover td { background: var(--sky-soft); }
+
+  /* collapsible breakdown */
+  details.breakdown { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  details.breakdown > summary {
+    cursor: pointer; padding: 11px 14px; font-size: 12px; font-weight: 600;
+    color: var(--ink-soft); list-style: none; display: flex; align-items: center; gap: 8px;
+    user-select: none;
+  }
+  details.breakdown > summary::-webkit-details-marker { display: none; }
+  details.breakdown > summary .chev { transition: transform .15s; font-size: 11px; color: var(--ink-faint); }
+  details.breakdown[open] > summary .chev { transform: rotate(90deg); }
+  .bd-body { padding: 4px 14px 14px; }
+  .bd-group { margin-top: 12px; }
+  .bd-group:first-child { margin-top: 4px; }
+  .bd-group .gh { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); font-weight: 600; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  .bd-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12.5px; color: var(--ink-soft); }
+  .bd-row .bd-amt { font-variant-numeric: tabular-nums; color: var(--ink); }
+  .bd-row.gt { font-weight: 650; color: var(--ink); border-top: 1px solid var(--line-soft); margin-top: 2px; padding-top: 6px; }
+
+  /* settings / price list */
+  .settings-toggle {
+    font: inherit; font-size: 12px; font-weight: 600; color: var(--sky);
+    background: none; border: none; cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .price-editor { margin-top: 16px; }
+  .pe-section { margin-bottom: 20px; }
+  .pe-section h3 { font-size: 12px; font-weight: 650; margin: 0 0 8px; color: var(--ink); }
+  .pe-row { display: grid; grid-template-columns: 1fr 90px; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+  .pe-row label { font-size: 12px; color: var(--ink-soft); font-weight: 400; line-height: 1.3; }
+  .pe-row input { padding: 6px 9px; font-size: 13px; text-align: right; }
+  .pe-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .btn {
+    font: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px;
+    border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--line);
+    background: #fff; color: var(--ink-soft);
+  }
+  .btn.primary { background: var(--sky); border-color: var(--sky); color: #fff; }
+  .btn:hover { border-color: var(--ink-faint); }
+  .btn.primary:hover { background: #096581; }
+
+  .footnote { font-size: 11.5px; color: var(--ink-faint); margin-top: 18px; line-height: 1.5; }
+  .hidden { display: none !important; }
+
+  .badge-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; }
+  .badge-pill.ok { background: var(--teal-soft); color: #146351; }
+  .badge-pill.warn { background: var(--amber-soft); color: var(--amber); }
+  .badge-pill.fail { background: var(--red-soft); color: var(--red); }
+
+  .glass-options { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+  .glass-options .go-head {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint);
+    font-weight: 650; padding: 9px 12px; background: var(--bg); border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: baseline;
+    cursor: pointer; user-select: none;
+  }
+  .glass-options .go-head:hover { background: var(--sky-soft); }
+  .glass-options .go-chev { transition: transform 0.18s ease; display: inline-block; margin-right: 5px; }
+  .glass-options.open .go-chev { transform: rotate(90deg); }
+  .glass-options .go-body { display: none; }
+  .glass-options.open .go-body { display: block; }
+  .glass-options table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .glass-options th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--ink-faint); font-weight: 600; padding: 7px 12px; border-bottom: 1px solid var(--line-soft);
+  }
+  .glass-options th.r, .glass-options td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .glass-options td { padding: 8px 12px; border-top: 1px solid var(--line-soft); }
+  .glass-options tbody tr { cursor: pointer; }
+  .glass-options tbody tr:hover td { background: var(--sky-soft); }
+  .glass-options tr.selected td { background: var(--sky-soft); font-weight: 600; }
+  .glass-options tr.unavailable td { color: var(--ink-faint); }
+  .go-name { max-width: 250px; }
+  .go-mull { font-weight: 650; }
+  .go-warn { color: var(--amber); font-size: 11px; }
+  .go-none { color: var(--red); font-size: 11px; }
+  .go-empty { padding: 14px 12px; font-size: 12.5px; color: var(--ink-faint); }
+
+  .size-block { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .size-row { display: grid; grid-template-columns: 122px 1fr 1fr 118px; gap: 12px; align-items: end; }
+  .size-label { font-size: 12px; font-weight: 650; color: var(--ink); padding-bottom: 9px; line-height: 1.25; }
+  .size-label .unit { display: block; font-size: 10.5px; font-weight: 400; color: var(--ink-faint); }
+  .size-arrow { text-align: center; font-size: 13px; color: var(--sky); margin: 5px 0; letter-spacing: 2px; }
+  .size-row .field label { font-size: 11.5px; }
+  .pitch-cell { grid-row: span 1; }
+  .pitch-note { font-size: 11px; color: var(--ink-faint); line-height: 1.35; padding-bottom: 4px; }
+  .pitch-note.warn { color: var(--amber); font-weight: 600; }
+  .derived { background: #f2f8fa !important; }
+  @media (max-width: 720px) {
+    .size-row { grid-template-columns: 1fr 1fr; }
+    .size-label { grid-column: 1 / -1; padding-bottom: 0; }
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+  .job-ref-input { width: 220px; }
+  @media (max-width: 620px) { .header-actions { width: 100%; } .job-ref-input { flex: 1; } }
+
+  /* mode selector bar */
+  .calc-mode-bar {
+    display: flex; gap: 8px; margin: 10px 0 14px; width: 100%; border-bottom: 1px solid var(--line); padding-bottom: 12px;
+  }
+  .mode-tab {
+    padding: 8px 16px; font-size: 13px; font-weight: 650; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--card); color: var(--ink-soft); cursor: pointer; transition: all 0.15s ease; outline: none;
+  }
+  .mode-tab:hover { border-color: var(--sky); color: var(--ink); }
+  .mode-tab.active { background: var(--sky); color: #fff; border-color: var(--sky); box-shadow: 0 2px 5px rgba(10,126,164,0.25); }
+
+  /* advanced flashing options accordion */
+  .adv-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: var(--radius-sm);
+    border: 1px dashed var(--line); background: none;
+    font-size: 12px; font-weight: 600; color: var(--ink-soft);
+    cursor: pointer; transition: all 0.15s ease; outline: none;
+  }
+  .adv-toggle:hover { border-color: var(--sky); color: var(--sky); }
+  .adv-toggle[aria-expanded="true"] { border-color: var(--sky); color: var(--sky); background: var(--sky-soft); }
+  .adv-toggle #advFlashingChev { transition: transform 0.2s ease; font-size: 10px; }
+  .adv-toggle[aria-expanded="true"] #advFlashingChev { transform: rotate(90deg); }
+  .adv-flashing-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-top: 8px;
+    padding: 12px; border-radius: var(--radius-sm);
+    background: var(--sky-soft); border: 1px solid var(--line);
+  }
+
+  /* ---- print / PDF layout ---- */
+  .print-only { display: none; }
+  
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    body { background: #fff; font-size: 11px; }
+    .wrap { max-width: none; padding: 0; }
+    .header-actions, .panel:nth-child(1) > h2 .settings-toggle, #priceEditor,
+    .top .header-actions, .footnote .no-print { display: none !important; }
+    /* hide the whole left input column and price-list panel on print */
+    .grid { display: block; }
+    .grid > div:first-child { display: none !important; }
+    .grid > .panel#results { border: none; padding: 0; }
+    details.breakdown { border: none; }
+    details.breakdown > summary { display: none; }
+    details.breakdown .bd-body { padding: 0; }
+    .print-only { display: block; }
+    .print-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 12px;
+    }
+    .print-header .ph-title { font-size: 16px; font-weight: 700; }
+    .print-header .ph-sub { font-size: 10px; color: var(--ink-soft); }
+    .print-header .ph-meta { text-align: right; font-size: 10px; color: var(--ink-soft); }
+    .print-spec { margin-bottom: 12px; }
+    .print-spec table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+    .print-spec td { padding: 3px 8px 3px 0; vertical-align: top; }
+    .print-spec td.k { color: var(--ink-faint); width: 130px; }
+    .print-spec td.v { font-weight: 600; }
+    .schematic { break-inside: avoid; }
+    .margins, .metrics, .breakdown { break-inside: avoid; }
+    input, select { border: none; padding: 0; font-weight: 600; -webkit-appearance: none; appearance: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="title-block">
+      <h1 id="appTitle">GSA Glass Roof Calculator</h1>
+      <div class="sub" id="appSub">Panel layout, AS 1288 compliance &amp; live costing — Skyspan</div>
+    </div>
+    <div class="header-actions">
+      <input type="text" id="jobRef" placeholder="Job / project reference" class="job-ref-input">
+      <button type="button" class="btn primary" id="printBtn">Save as PDF</button>
+    </div>
+  </header>
+
+  <div class="calc-mode-bar">
+    <button type="button" class="mode-tab active" id="tabGsa" onclick="setCalcMode('gsa')">GSA Glass Roof Calculator</button>
+    <button type="button" class="mode-tab" id="tabGxl" onclick="setCalcMode('gxl')">GXL Skylight (Single Panel)</button>
+    <button type="button" class="mode-tab" id="tabGxlm" onclick="setCalcMode('gxlm')">GXLM Modular Skylight (Mullions)</button>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: inputs -->
+    <div>
+      <div class="panel">
+        <h2 style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Job inputs</span>
+          <span id="gxlVariantBadge" class="badge-pill" style="display:none; background:var(--sky-soft); color:var(--sky); font-weight:700;">GXL</span>
+        </h2>
+
+        <div class="size-block">
+          <div class="size-row">
+            <div class="size-label">Plan view <span class="unit">as drawn</span></div>
+            <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="planW" min="1" step="10"></div>
+            <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="planL" min="1" step="10"></div>
+            <div class="field pitch-cell" rowspan="2">
+              <label>Roof pitch <span class="unit">degrees</span></label>
+              <input type="number" id="pitchDeg" value="3" min="0" max="85" step="0.5">
+            </div>
+          </div>
+          <div class="size-arrow"><span id="sizeDir">↕</span></div>
+          <div class="size-row">
+            <div class="size-label">Actual glass <span class="unit">used for costing</span></div>
+            <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="ow" min="1" step="10"></div>
+            <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="ol" min="1" step="10"></div>
+            <div class="field"><div class="pitch-note" id="pitchNote"></div></div>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:6px;">Fill in either row — the other calculates from the pitch. Only the <strong>length</strong> (down the fall) is foreshortened in plan view; width is the same in both.</div>
+
+        <div class="field-grid" style="margin-top:16px;" id="mullTransomRow">
+          <div class="field" id="mullionField">
+            <label>Mullions <span class="unit">run with fall (up/down)</span></label>
+            <input type="number" id="mullions" value="0" min="0" step="1" oninput="render()">
+          </div>
+          <div class="field" id="transomField">
+            <label>Transoms <span class="unit">run across the fall</span></label>
+            <input type="number" id="transoms" value="0" min="0" step="1" oninput="render()">
+          </div>
+          <div class="field full" id="mullTransomHint">
+            <span class="hint">Mullions divide the width into panels; transoms divide the length. Transoms cross the fall and dam water, so they're used only when the length can't be covered by one sheet.</span>
+          </div>
+        </div>
+
+        <div class="field-grid" style="margin-top:16px;">
+          <div class="field">
+            <label>Glazing</label>
+            <select id="glazing">
+              <option value="sg">Single glazed</option>
+              <option value="dg" selected>Double glazed</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Glass product</label>
+            <select id="glass"></select>
+          </div>
+          <div class="field" id="thermalCapField" style="display:none;">
+            <label>Cap Type</label>
+            <select id="thermalCap">
+              <option value="on" selected>Thermal Cap (GXL / GXLM)</option>
+              <option value="off">Non-Thermal Cap (GXLB / GXLBM)</option>
+            </select>
+          </div>
+          <div class="field full" id="advFlashingToggleRow" style="display:none; margin-top:4px;">
+            <button type="button" class="adv-toggle" id="advFlashingToggle" onclick="toggleAdvFlashing()" aria-expanded="false">
+              <span id="advFlashingChev">▸</span> Advanced flashing options
+            </button>
+          </div>
+          <div class="field full" id="advFlashingPanel" style="display:none;">
+            <div class="adv-flashing-grid">
+              <div class="field">
+                <label>Throat Height <span class="unit">mm</span></label>
+                <input type="number" id="throatH" value="70" min="0" step="5" oninput="render()">
+              </div>
+              <div class="field">
+                <label>Downturn Length <span class="unit">mm</span></label>
+                <input type="number" id="downturnL" value="60" min="0" step="5" oninput="render()">
+              </div>
+              <div class="field">
+                <label>Flashing Side E <span class="unit">mm</span></label>
+                <input type="number" id="flashE" value="200" min="0" step="10" oninput="render()">
+              </div>
+              <div class="field">
+                <label>Flashing Side F <span class="unit">mm</span></label>
+                <input type="number" id="flashF" value="200" min="0" step="10" oninput="render()">
+              </div>
+              <div class="field">
+                <label>Flashing Side G <span class="unit">mm</span></label>
+                <input type="number" id="flashG" value="200" min="0" step="10" oninput="render()">
+              </div>
+              <div class="field">
+                <label>Flashing Side H <span class="unit">mm</span></label>
+                <input type="number" id="flashH" value="200" min="0" step="10" oninput="render()">
+              </div>
+              <div class="field full">
+                <span class="hint">Girth = Throat Height + Flashing Side + Downturn Length. Defaults: Throat 70 mm, Downturn 60 mm, Sides 200 mm → Girth 330 mm. * If CT flashing set Throat to 0. ** If girth &gt; 270 mm add 1 to downturn.</span>
+              </div>
+            </div>
+          </div>
+          <div class="field full">
+            <span class="hint" id="glassHint"></span>
+          </div>
+        </div>
+
+        <div id="sizeError"></div>
+        <div id="glassOptions" class="glass-options"></div>
+
+
+
+        <div class="field-grid" style="margin-top:14px;">
+          <div class="field">
+            <label>Is there a main frame?</label>
+            <select id="hasMainframe">
+              <option value="yes" selected>Yes — building has its own frame</option>
+              <option value="no">No — Skyspan supplies the structure</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="frameLabel">Subframe</label>
+            <select id="subframe"></select>
+          </div>
+          <div class="field full">
+            <span class="hint" id="frameHint"></span>
+          </div>
+        </div>
+
+        <details class="breakdown" open style="margin-top:16px;">
+          <summary><span class="chev">▸</span> Manual Overrides (Yellow Excel Fields)</summary>
+          <div class="bd-body">
+            <div class="hint" style="margin-bottom:10px;">These fields mirror all yellow input cells from your Excel calculator. Edit any value to match specific quote overrides.</div>
+            
+            <div style="font-weight:600; font-size:12px; margin:10px 0 6px 0; color:var(--sky-dark); text-transform:uppercase; letter-spacing:0.5px;">Materials &amp; Glazing (Yellow Boxes)</div>
+            <div class="field-grid">
+              <div class="field"><label>Cleats Qty <span class="unit">default 1</span></label><input type="number" id="cleatsQty" placeholder="1" min="0" step="1" oninput="render()"></div>
+              <div class="field"><label>Glass extras <span class="unit">$/panel</span></label><input type="number" id="glassExtraPerPanel" value="0" min="0" step="50" oninput="render()"></div>
+              <div class="field"><label>Paint / powdercoat <span class="unit">$ — default 750</span></label><input type="number" id="paintCostOverride" placeholder="750" min="0" step="50" oninput="render()"></div>
+              <div class="field"><label>Others cost <span class="unit">$ — default 250</span></label><input type="number" id="othersOverride" placeholder="250" min="0" step="50" oninput="render()"></div>
+            </div>
+
+            <div style="font-weight:600; font-size:12px; margin:14px 0 6px 0; color:var(--sky-dark); text-transform:uppercase; letter-spacing:0.5px;">Labour Rates &amp; Minutes (Yellow Boxes)</div>
+            <div class="field-grid">
+              <div class="field"><label>Fab labour rate <span class="unit">$/min (def 1.60)</span></label><input type="number" id="fabRate" placeholder="1.60" min="0" step="0.10" oninput="render()"></div>
+              <div class="field"><label>Install labour rate <span class="unit">$/min (def 1.90)</span></label><input type="number" id="installRate" placeholder="1.90" min="0" step="0.10" oninput="render()"></div>
+              <div class="field"><label>Cut cleats <span class="unit">min (def 60)</span></label><input type="number" id="cutCleatsMin" placeholder="60" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Weld cleats <span class="unit">min (def 60)</span></label><input type="number" id="weldCleatsMin" placeholder="60" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Painting <span class="unit">min (def 60)</span></label><input type="number" id="paintMin" placeholder="60" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Install tape <span class="unit">min (def 30)</span></label><input type="number" id="tapeMin" placeholder="30" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Install glazing fab <span class="unit">min</span></label><input type="number" id="instGlazeFabMin" value="0" min="0" step="10" oninput="render()"></div>
+            </div>
+
+            <div style="font-weight:600; font-size:12px; margin:14px 0 6px 0; color:var(--sky-dark); text-transform:uppercase; letter-spacing:0.5px;">Packing &amp; Installation (Yellow Boxes)</div>
+            <div class="field-grid">
+              <div class="field"><label>Packaging <span class="unit">$ — def 250</span></label><input type="number" id="packagingOverride" placeholder="250" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Installation crew <span class="unit">men (def 4)</span></label><input type="number" id="instMen" value="4" min="3" max="10" step="1" oninput="render()"></div>
+              <div class="field"><label>Extra glazing install <span class="unit">min</span></label><input type="number" id="instGlaze2Min" value="0" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Extra glazing install <span class="unit">qty</span></label><input type="number" id="instGlaze2Qty" value="0" min="0" step="1" oninput="render()"></div>
+              <div class="field"><label>Extra join on site <span class="unit">min</span></label><input type="number" id="join2Min" value="0" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Extra join on site <span class="unit">qty</span></label><input type="number" id="join2Qty" value="0" min="0" step="1" oninput="render()"></div>
+              <div class="field"><label>Make-up <span class="unit">min</span></label><input type="number" id="makeupMin" value="0" min="0" step="10" oninput="render()"></div>
+              <div class="field"><label>Make-up <span class="unit">qty</span></label><input type="number" id="makeupQty" value="0" min="0" step="1" oninput="render()"></div>
+            </div>
+
+            <div style="font-weight:600; font-size:12px; margin:14px 0 6px 0; color:var(--sky-dark); text-transform:uppercase; letter-spacing:0.5px;">Quote Additions &amp; Extras (Yellow Boxes)</div>
+            <div class="field-grid">
+              <div class="field"><label>Miscellaneous <span class="unit">$</span></label><input type="number" id="miscCost" value="0" min="0" step="50" oninput="render()"></div>
+              <div class="field"><label>Drawing &amp; Eng. <span class="unit">$</span></label><input type="number" id="drawingCost" value="0" min="0" step="50" oninput="render()"></div>
+              <div class="field"><label>Retention <span class="unit">$</span></label><input type="number" id="retentionCost" value="0" min="0" step="50" oninput="render()"></div>
+              <div class="field"><label>Travel &amp; Accom. <span class="unit">$</span></label><input type="number" id="travelCost" value="0" min="0" step="50" oninput="render()"></div>
+              <div class="field full"><label>Cranage / Scaffold <span class="unit">$</span></label><input type="number" id="cranageCost" value="0" min="0" step="50" oninput="render()"></div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel" style="margin-top:20px;">
+        <h2 style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Price list</span>
+          <button class="settings-toggle" id="peToggle">Edit prices ▸</button>
+        </h2>
+        <div class="hint" id="priceSourceHint">Prices come from the shared company list. Editing here creates a <strong>personal override</strong> in your browser only — it won't change the master. To update prices for everyone, edit the <code>Skyspan_Master_Pricing.xlsx</code> file in SharePoint.</div>
+        <div class="price-editor hidden" id="priceEditor"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div class="panel" id="results"></div>
+  </div>
+
+  <p class="footnote" id="footnote"></p>
+</div>
+
+<script>
+/* ============================================================
+   LIVE PRICES — injected by Power Automate on every Excel save
+   If the fetch below also works, it will overwrite these values.
+   ============================================================ */
+/* @@PRICES_START@@ */
+const DEFAULTS = {
+  "products": [
+    {
+      "code": "GSA",
+      "name": "Glass Skylight Architectural (custom flat glass roof)",
+      "glassList": "STANDARD",
+      "engine": "GSA",
+      "notes": "Custom fabricated roof — mullions/transoms, live calculator"
+    },
+    {
+      "code": "GXL",
+      "name": "Glass Skylight XL (unit skylight)",
+      "glassList": "STANDARD",
+      "engine": "TBD",
+      "notes": "Calculator engine to be built — shares STANDARD glass"
+    },
+    {
+      "code": "GSLHB",
+      "name": "Glass Skylight Low-profile Hip/Box",
+      "glassList": "STANDARD",
+      "engine": "TBD",
+      "notes": "Calculator engine to be built — shares STANDARD glass"
+    },
+    {
+      "code": "GCXL",
+      "name": "Glass Skylight Commercial XL",
+      "glassList": "GCXL",
+      "engine": "TBD",
+      "notes": "Own glass list — calculator engine to be built"
+    },
+    {
+      "code": "TGF",
+      "name": "Tailor-made Glass Feature",
+      "glassList": "PROJECT",
+      "engine": "TBD",
+      "notes": "Glass quoted per job; estimator enters rate in the calculator"
+    }
+  ],
+  "glassLists": {
+    "STANDARD": [
+      {
+        "name": "6.38mm Cl Ann Lam + 12 Argon + 6 Tgh Mono Low E",
+        "rate": 198,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 0,
+        "maxA": 3300,
+        "maxB": 2440
+      },
+      {
+        "name": "12.38mm Cl Ann Lam + 12 Argon + 6 Tgh Low E",
+        "rate": 248,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 12.38,
+        "lite2": 6,
+        "total": 0,
+        "maxA": 3660,
+        "maxB": 2000
+      },
+      {
+        "name": "11.52mm HS Lam Low E + 12 Argon + 8 Tgh Mono",
+        "rate": 475,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 11.52,
+        "lite2": 8,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 4500
+      },
+      {
+        "name": "13.52mm HS Lam Low E + 12 Argon + 10 Tgh Mono",
+        "rate": 600,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 10,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 3300
+      },
+      {
+        "name": "13.52mm HS Lam Low E + 12 Argon + 13.52 HS Lam",
+        "rate": 650,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 13.52,
+        "total": 0,
+        "maxA": 5000,
+        "maxB": 2000
+      },
+      {
+        "name": "13.52mm HS Lam Low E + 12 Argon + 13.52 HS Lam (B)",
+        "rate": 674,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 13.52,
+        "total": 0,
+        "maxA": 4500,
+        "maxB": 2500
+      },
+      {
+        "name": "17.52mm HS Lam Low E + 16 Argon + 13.52 HS Lam",
+        "rate": 737,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 17.52,
+        "lite2": 13.52,
+        "total": 0,
+        "maxA": 2000,
+        "maxB": 2200
+      },
+      {
+        "name": "12.38mm Clear Annealed Laminate",
+        "rate": 105,
+        "glazing": "SG",
+        "type": "lam_annealed",
+        "thk": 12.38,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 3660,
+        "maxB": 3660
+      },
+      {
+        "name": "11.52mm HS Laminate Low E",
+        "rate": 253,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 11.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 2500
+      },
+      {
+        "name": "13.52mm HS Laminate Low E (Std <2440x3660)",
+        "rate": 281,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 4500
+      },
+      {
+        "name": "13.52mm HS Laminate Low E (Oversize)",
+        "rate": 350,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 3660,
+        "maxB": 2000
+      },
+      {
+        "name": "17.52mm HS Laminate Low E (Oversize)",
+        "rate": 396,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 17.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 5000,
+        "maxB": 2200
+      },
+      {
+        "name": "21.52mm HS Laminate Low E (Oversize)",
+        "rate": 1356,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 21.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 2500,
+        "maxB": 5000
+      }
+    ]
+  },
+  "labour": {
+    "fab": 1.6,
+    "install": 1.9
+  },
+  "materials": {
+    "tape": 45,
+    "rubber": 90,
+    "angle": 50,
+    "rivet": 0.1,
+    "silicone": 7,
+    "cleat": 100,
+    "zinc": 40
+  },
+  "suite": {
+    "sideSG": 80,
+    "sideDG": 108,
+    "mullSG": 73,
+    "mullDG": 101
+  },
+  "subframe": [
+    {
+      "id": "plant",
+      "name": "Plant-on adapters — no subframe",
+      "sg": 0,
+      "dg": 0,
+      "sect": 0,
+      "frameType": "Subframe",
+      "maxSpanSG": null,
+      "maxSpanDG": null
+    },
+    {
+      "id": "al50x25",
+      "name": "50x25x3 Aluminium RHS",
+      "sg": 85,
+      "dg": 85,
+      "sect": 25,
+      "frameType": "Subframe",
+      "maxSpanSG": 1800,
+      "maxSpanDG": 1500
+    },
+    {
+      "id": "al50x50",
+      "name": "50x50x3 Aluminium RHS",
+      "sg": 115,
+      "dg": 115,
+      "sect": 50,
+      "frameType": "Subframe",
+      "maxSpanSG": 2400,
+      "maxSpanDG": 2100
+    },
+    {
+      "id": "al50x100",
+      "name": "50x100x3 Aluminium RHS",
+      "sg": 150,
+      "dg": 150,
+      "sect": 50,
+      "frameType": "Subframe",
+      "maxSpanSG": 3600,
+      "maxSpanDG": 3200
+    },
+    {
+      "id": "st50x100",
+      "name": "50x100x3 Steel RHS",
+      "sg": 250,
+      "dg": 300,
+      "sect": 50,
+      "frameType": "Mainframe",
+      "maxSpanSG": 5000,
+      "maxSpanDG": 4500
+    }
+  ],
+  "fixed": {
+    "paintDG": 120,
+    "paintSG": 240,
+    "paintCost": 750,
+    "others": 250,
+    "packaging": 250,
+    "packLabourMin": 60,
+    "stockLen": 6500
+  }
+};
+/* @@PRICES_END@@ */
+
+/* ============================================================
+   LIVE PRICES INJECTION — Power Automate replaces the line below
+   automatically whenever Skyspan_Master_Pricing.xlsx is saved.
+   Do not edit manually between the @@LIVE markers.
+   ============================================================ */
+/* @@LIVE_PRICES_START@@ */
+var LIVE_PRICES_RAW = null;
+/* @@LIVE_PRICES_END@@ */
+
+/* ============================================================
+   AS 1288:2021 Section 6 — 4-edge support max spans (mm)
+   ============================================================ */
+/* ============================================================
+   AS 1288:2021 Section 6 — 4-edge support max spans (mm)
+   Tables 6.2 (Annealed), 6.3 (Heat-Strengthened), 6.4 (Toughened)
+   Spans defined for AR = 1, AR = 2, AR = 3 with linear interpolation
+   ============================================================ */
+const AS1288_TABLES = {
+  low: { // < 30° pitch (1.1 kN live load)
+    lam_annealed: {
+      6:  [0, 0, 0],
+      8:  [250, 0, 0],
+      10: [550, 350, 330],
+      12: [1200, 825, 750]
+    },
+    lam_hs: {
+      6:  [400, 250, 250],
+      8:  [1450, 950, 900],
+      10: [2000, 2000, 2000],
+      12: [2000, 2000, 2000]
+    },
+    lam_toughened: {
+      6:  [1100, 725, 700],
+      8:  [2000, 2000, 2000],
+      10: [2000, 2000, 2000],
+      12: [2000, 2000, 2000]
+    }
+  },
+  high: { // ≥ 30° pitch (0.5 kN live load)
+    lam_annealed: {
+      6:  [400, 250, 250],
+      8:  [1400, 850, 800],
+      10: [2000, 1900, 1700],
+      12: [2000, 2000, 1900]
+    },
+    lam_hs: {
+      6:  [2000, 1500, 1200],
+      8:  [2000, 1800, 1600],
+      10: [2000, 2000, 1800],
+      12: [2000, 2000, 1950]
+    },
+    lam_toughened: {
+      6:  [2000, 2000, 2000],
+      8:  [2000, 2000, 2000],
+      10: [2000, 2000, 2000],
+      12: [2000, 2000, 2000]
+    }
+  }
+};
+
+const EPS = 0.5;
+
+function getNominalThickness(thk){
+  if(thk <= 7.0) return 6;
+  if(thk <= 9.0) return 8;
+  if(thk <= 11.0) return 10;
+  return 12;
+}
+
+function checkAS1288(spanW, spanL, pitch, type, thk){
+  const span = Math.min(spanW, spanL);
+  const len = Math.max(spanW, spanL);
+  const ar = Math.max(1.0, len / span);
+
+  const nominalThk = getNominalThickness(thk);
+  const tableType = (type === 'lam_hs') ? 'lam_hs'
+                  : (type === 'lam_toughened' || type === 'lam_tgh') ? 'lam_toughened'
+                  : 'lam_annealed';
+
+  const table = AS1288_TABLES[pitch] && AS1288_TABLES[pitch][tableType];
+  if(!table) return { ok: false, notPermitted: false, noData: true, ar, span, maxSpan: null };
+
+  const spans = table[nominalThk] || table[12];
+  if(!spans) return { ok: false, notPermitted: false, noData: true, ar, span, maxSpan: null };
+
+  let maxSpan = 0;
+  if (ar <= 1.0) {
+    maxSpan = spans[0];
+  } else if (ar <= 2.0) {
+    maxSpan = spans[0] + (spans[1] - spans[0]) * (ar - 1.0);
+  } else if (ar <= 3.0) {
+    maxSpan = spans[1] + (spans[2] - spans[1]) * (ar - 2.0);
+  } else {
+    maxSpan = spans[2];
+  }
+
+  if (maxSpan === 0) {
+    return { ok: false, notPermitted: true, noData: false, ar, span, maxSpan: 0 };
+  }
+
+  return { ok: span <= maxSpan + EPS, notPermitted: false, noData: false, ar, span, maxSpan };
+}
+
+/* ============================================================
+   COSTING ENGINE — ported & verified against 7 reference jobs
+   ============================================================ */
+const ceil = x => Math.ceil(x - 1e-9);
+function kBig(x){
+  const t=[[0.25,0.25],[0.5001,0.5],[0.999,1],[1.4999,1.5],[1.5,2],[2,2.25],[2.5,2.5],[3,3],[3.5,3.5],[4,4],[4.5,4.5],[5,5],[5.5,5.5],[6,6],[6.5,6.5],[7,7],[7.5,7.5],[8,8]];
+  for(const [thr,v] of t) if(x<thr) return v; return 8;
+}
+function kSmall(x){
+  if(x<0.25)return 0.25; if(x<0.5001)return 0.5; if(x<0.999)return 1; if(x<1.4999)return 1.5; return 2;
+}
+function joinBand(W){
+  const b=[6301,9999,14999,19999,24999,29999,34999,39999,44999,49999,54999];
+  for(let i=0;i<b.length;i++) if(W<b[i]) return i; return 11;
+}
+
+function calculate(P, inp){
+  const { W, L, mull, trans, dg, glass, subframe } = inp;
+  const sect = subframe.sect;
+  const stock = P.fixed.stockLen;
+  const rhsPrice = dg ? subframe.dg : subframe.sg;
+  const side = dg ? P.suite.sideDG : P.suite.sideSG;
+  const mullSuite = dg ? P.suite.mullDG : P.suite.mullSG;
+  const FAB = (inp.extra?.fabRate != null && !isNaN(inp.extra.fabRate) && inp.extra.fabRate !== '') ? parseFloat(inp.extra.fabRate) : P.labour.fab;
+  const INST = (inp.extra?.installRate != null && !isNaN(inp.extra.installRate) && inp.extra.installRate !== '') ? parseFloat(inp.extra.installRate) : P.labour.install;
+  const M = P.materials;
+
+  // --- Glazing ---
+  const panelW = (W + 50) / (mull + 1) - 25;
+  const panelH = L + 12.5 + sect + 40;
+  const qty = (mull + 1) * (trans + 1);
+  const glazingQtyAcross = mull + 1; // workbook treats glazing qty as mull+1 (single row of cut sheets)
+  const cutQty = mull + 1;
+  const panelPrice = (panelW * panelH / 1e6) * glass.rate + (inp.extra?.glassExtraPerPanel || 0);
+  const glazingTotal = cutQty * panelPrice;
+
+  // --- Materials ---
+  const C21 = W + sect*2, G21 = L + sect*2;
+  const K22 = ceil(kBig(C21/stock)*2), M22b = ceil(kSmall(G21/stock)*2);
+  const G23 = (W - mull*sect)/(mull+1), C24 = mull, G24 = (mull+1)*trans;
+  const K26 = ceil(kSmall(L/stock)*C24), M26 = G24>0 ? ceil(kSmall(G23/stock)*G24) : 0;
+  const rhsPieces = K22 + M22b + K26 + M26;
+  const G46 = rhsPieces * rhsPrice;
+  const cleatQty = (inp.extra?.cleatsQty != null && !isNaN(inp.extra.cleatsQty)) ? inp.extra.cleatsQty : 1;
+  const G47 = cleatQty * M.cleat;
+  const C31 = W + sect*2, G31 = L + sect*2 + 50;
+  const K32 = ceil(kBig(C31/stock)*1), M32 = ceil(kSmall(G31/stock)*2);
+  const G48 = (K32 + M32) * side;
+  const C33 = L + sect + 50;
+  const K36 = ceil(kSmall(C33/stock)*mull);
+  const G49 = K36 * mullSuite;
+  const C35 = C31 + G31*2 + C33*mull;            // total glazing-bar length
+  const G50 = (C35/1000) * (M.tape/30.5);
+  const G51 = (C35/1000) * (M.rubber/100);
+  const G52 = 1 * M.angle;
+  const G53 = ceil(C35/200) * M.rivet;
+  const G54 = (mull + trans + 3) * M.silicone;
+  const G55 = (inp.extra?.paintCostOverride != null && !isNaN(inp.extra.paintCostOverride) && inp.extra.paintCostOverride !== '') ? parseFloat(inp.extra.paintCostOverride) : P.fixed.paintCost;
+  const G56 = (((W + L)/1000) * 2 * 0.5) * M.zinc;
+  const G57 = (inp.extra?.othersOverride != null && !isNaN(inp.extra.othersOverride) && inp.extra.othersOverride !== '') ? parseFloat(inp.extra.othersOverride) : P.fixed.others;
+  const matLines = {
+    'RHS section': G46, 'Cleats': G47, 'Side glazing system': G48,
+    'Mullion glazing system': G49, 'Glazing tape': G50, 'Glazing rubber': G51,
+    'Angle': G52, 'Rivets': G53, 'Silicone': G54, 'Paint / powdercoat': G55,
+    'Flashings': G56, 'Others': G57
+  };
+  const matTotal = Object.values(matLines).reduce((a,b)=>a+b,0);
+
+  // --- Fabrication labour ---
+  const G25 = 2 + 2 + C24 + G24;
+  const C26 = (2*2) + (C24*2) + (G24*2);
+  const G35 = (1 + 2 + mull) * 3;
+  const paintMinVal = (inp.extra?.paintMin != null && !isNaN(inp.extra.paintMin) && inp.extra.paintMin !== '') ? parseFloat(inp.extra.paintMin) : (dg ? P.fixed.paintDG : P.fixed.paintSG);
+  const cutCleatsVal = (inp.extra?.cutCleatsMin != null && !isNaN(inp.extra.cutCleatsMin) && inp.extra.cutCleatsMin !== '') ? parseFloat(inp.extra.cutCleatsMin) : 60;
+  const weldCleatsVal = (inp.extra?.weldCleatsMin != null && !isNaN(inp.extra.weldCleatsMin) && inp.extra.weldCleatsMin !== '') ? parseFloat(inp.extra.weldCleatsMin) : 60;
+  const tapeMinVal = (inp.extra?.tapeMin != null && !isNaN(inp.extra.tapeMin) && inp.extra.tapeMin !== '') ? parseFloat(inp.extra.tapeMin) : 30;
+
+  const labLines = {
+    'RHS set-up': 30, 'Cut RHS': G25*15, 'Weld RHS': C26*20, 'Cut cleats': cutCleatsVal,
+    'Weld cleats': weldCleatsVal, 'Glazing system set-up': 30, 'Cut glazing system': G35*10,
+    'Prepare plant adaptor': (1+2+mull)*10, 'Install plant adaptor': (G35/3)*20,
+    'Painting': paintMinVal, 'Install glazing tape': tapeMinVal, 'Install glazing': (inp.extra?.instGlazeFabMin||0)
+  };
+  let labMin = Object.values(labLines).reduce((a,b)=>a+b,0);
+  const labTotal = labMin * FAB;
+  const fabTotal = matTotal + labTotal;
+
+  // --- Packing ---
+  const packPackaging = (inp.extra && inp.extra.packaging != null) ? inp.extra.packaging : P.fixed.packaging;
+  const packLabour = P.fixed.packLabourMin * FAB;
+  const packTotal = packPackaging + packLabour;
+
+  // --- Installation ---  (C min × D men × E constant × F rate)
+  const men = (inp.extra?.instMen && !isNaN(inp.extra.instMen)) ? parseInt(inp.extra.instMen, 10) : 4;
+  const e93 = joinBand(W);
+  const x = inp.extra || {};
+  const instRaw = {
+    'Install frame':        120 * men * 1,
+    'Install rubbers':      10  * men * cutQty,
+    'Install glazing':      30  * men * cutQty,
+    'Flashing':             30  * men * cutQty,
+    'Join on site':         120 * men * e93,
+    'Install glazing (2)':  (x.instGlaze2Min||0) * men * (x.instGlaze2Qty||0),
+    'Join on site (2)':     (x.join2Min||0)      * men * (x.join2Qty||0),
+    'Make-up':              (x.makeupMin||0)     * men * (x.makeupQty||0)
+  };
+  const baseInst = ['Install frame','Install rubbers','Install glazing','Flashing','Join on site'];
+  const instLines = {};
+  Object.entries(instRaw).forEach(([k,v]) => { if(v>0 || baseInst.includes(k)) instLines[k] = v * INST; });
+  const instTotal = Object.values(instRaw).reduce((a,b)=>a+b,0) * INST;
+
+  // --- Totals & margins ---
+  const addMisc = parseFloat(inp.extra?.miscCost)||0;
+  const addDrawing = parseFloat(inp.extra?.drawingCost)||0;
+  const addRetention = parseFloat(inp.extra?.retentionCost)||0;
+  const addTravel = parseFloat(inp.extra?.travelCost)||0;
+  const addCranage = parseFloat(inp.extra?.cranageCost)||0;
+  const totalCost = glazingTotal + fabTotal + packTotal + instTotal + addMisc + addDrawing + addRetention + addTravel + addCranage;
+  const margins = [40,45,50,55,60,65].map(m => ({
+    pct: m, sell: totalCost/(1 - m/100), profit: totalCost/(1 - m/100) - totalCost
+  }));
+
+  return {
+    panelW, panelH, qty, cutQty, panelPrice,
+    glazingTotal, matLines, matTotal,
+    labLines: Object.fromEntries(Object.entries(labLines).map(([k,v])=>[k, v*FAB])),
+    labTotal, fabTotal,
+    packLines: {'Packaging': packPackaging, 'Labour': packLabour}, packTotal,
+    instLines, instTotal, totalCost, margins, joinSegments: e93
+  };
+}
+
+function calculateGXL(P, inp){
+  const { W, L, mull, thermalCap, dg, glass } = inp;
+  // Flashing overrides (from Advanced Flashing Options, defaulting to Excel values)
+  const throatH   = inp.throatH   ?? 70;
+  const downturnL = inp.downturnL ?? 60;
+  const flashE    = inp.flashE    ?? 200;
+  const flashF    = inp.flashF    ?? 200;
+  const flashG    = inp.flashG    ?? 200;
+  const flashH    = inp.flashH    ?? 200;
+  const cols = mull + 1;
+  const qty  = cols;
+
+  // Max total skylight size cap: 2400 x 6400 mm
+  const maxSkylightOk = (W <= 2400 && L <= 6400) || (W <= 6400 && L <= 2400);
+
+  // Panel cut size
+  const panelW = mull === 0 ? (W + 50) : ((W - mull * 50) / cols + 50);
+  const panelH = L + 50;
+
+  // Glass SQM = (W+80)/1000 x (L+80)/1000 (outer frame area)
+  const outerW = W + 80;
+  const outerL = L + 80;
+  const glassSQMTotal = (outerW / 1000) * (outerL / 1000);
+  const panelPrice = (glassSQMTotal / qty) * glass.rate;
+  const glazingTotal = glassSQMTotal * glass.rate;
+
+  // Girth per side (Throat + FlashingSide + Downturn)
+  const girthE = throatH + flashE + downturnL;
+  const girthF = throatH + flashF + downturnL;
+  const girthG = throatH + flashG + downturnL;
+  const girthH = throatH + flashH + downturnL;
+
+  // G/H side length (same formula for GXL and GXLM)
+  const lenG = L + flashE + flashF + (downturnL + 10) * 2;
+  const lenH = lenG;
+
+  const framePerimeterLM = ((W + 100) * 2 + (L + 100) * 2) / 1000;
+
+  let matLines, matTotal, labTotal, packTotal, totalCost;
+
+  if (mull === 0) {
+    // ── Single Panel (GXL if thermalCap ON, GXLB if thermalCap OFF) ─────────
+    const lenE = W + 50;  // for single panel, full width = per-panel width
+    const lenF = lenE;
+
+    const flashingSQM = ((girthE * lenE) + (girthF * lenF) + (girthG * lenG) + (girthH * lenH)) / 1e6;
+    const flashingCost = flashingSQM * 20; // GXL/GXLB zinc rate $20/sqm (G15=20 in GXL & GXLB sheets)
+
+    if (thermalCap) {
+      // GXL (Thermal Cap ON) - exact match to GXL (Thermal Cap) 925x.xlsx
+      const frameCost  = framePerimeterLM * 28; // $28/m frame rate (Row 18)
+      const capCost    = framePerimeterLM * 20; // $20/m cap rate (Row 19)
+      const rivetQty   = Math.ceil(framePerimeterLM / 0.15);
+      const rivetCost  = rivetQty * 0.05; // $0.05/ea (Row 28)
+
+      matLines = {
+        'Glazing':            glazingTotal,
+        'Perimeter Frame':    frameCost,
+        'Thermal Cap System': capCost,
+        'Flashings':          flashingCost,
+        'Rivets & Fasteners': rivetCost
+      };
+      labTotal  = 424; // GXL fixed labour
+      packTotal = 0;   // GXL no packaging charge
+    } else {
+      // GXLB (Non-Thermal Cap OFF) - per GXLB (Non-Thermal Cap) Glass Skylight Template.xlsx
+      const frameCost  = framePerimeterLM * 34; // $34/m (G19 in GXLB sheet)
+      const rivetQty   = Math.ceil(framePerimeterLM / 0.15);
+      const rivetCost  = rivetQty * 0.05; // $0.05 (E31 in GXLB sheet)
+
+      matLines = {
+        'Glazing':            glazingTotal,
+        'Perimeter Frame':    frameCost,
+        'Thermal Cap System': 0,
+        'Flashings':          flashingCost,
+        'Rivets & Fasteners': rivetCost
+      };
+      labTotal  = 328; // GXLB fixed labour (G42 in GXLB sheet)
+      packTotal = 0;   // GXLB no packaging charge
+    }
+    matTotal  = Object.values(matLines).reduce((a, b) => a + b, 0);
+    totalCost = matTotal + labTotal;
+
+  } else {
+    // ── Multi-Panel with Mullions (GXLM if thermalCap ON, GXLBM if OFF) ────
+    const lenE = W + 50;  // FULL width
+    const lenF = lenE;
+
+    const flashingSQM = ((girthE * lenE) + (girthF * lenF) + (girthG * lenG) + (girthH * lenH)) / 1e6;
+    const flashingCost = flashingSQM * 40; // GXLM zinc $40/sqm (Formulas!E24 = 40)
+
+    const FRAME_RATE = ((57 + 107) / 6.5) * 1.2; // $30.277/m (G20 = (E7+E8)/6.5*1.2)
+    const frameCost  = framePerimeterLM * FRAME_RATE;
+
+    // Thermal Cap: GXLM formula ((W+L)/1000)*4 x $1.2869/m
+    const CAP_RATE  = 39.25 / 30.5;  // Formulas!E15/30.5 = $1.2869/m
+    const capLM     = thermalCap ? ((W / 1000) + (L / 1000)) * 4 : 0;
+    const capCost   = capLM * CAP_RATE;
+
+    const mullionLM   = (L / 1000) * mull;
+    const mullionCost = mullionLM * 8.923; // 50x50x3 SHS @ $58/6.5m = $8.923/m
+
+    const rivetQty   = Math.ceil(framePerimeterLM / 0.15);
+    const rivetCost  = rivetQty * 0.05; // GXLM rivet rate $0.05
+
+    matLines = {
+      'Glazing':            glazingTotal,
+      'Perimeter Frame':    frameCost,
+      'Mullion Extrusions': mullionCost,
+      'Thermal Cap System': capCost,
+      'Flashings':          flashingCost,
+      'Rivets & Fasteners': rivetCost
+    };
+    matTotal  = Object.values(matLines).reduce((a, b) => a + b, 0);
+    labTotal  = 480;  // GXLM fixed labour (G44 in GXLM sheet)
+    packTotal = 635;  // GXLM packaging/paint (G47 in GXLM sheet)
+    totalCost = matTotal + labTotal + packTotal;
+  }
+
+  const margins = [40, 45, 50, 55, 60, 65].map(m => {
+    const mult = m === 40 ? 1.6667 : m === 45 ? 1.8182 : m === 50 ? 2 : m === 55 ? 2.2222 : m === 60 ? 2.5 : 2.8571;
+    const sell = totalCost * mult;
+    return { pct: m, sell: Math.round(sell), profit: Math.round(sell - totalCost) };
+  });
+
+  const variant = mull === 0
+    ? (thermalCap ? 'GXL' : 'GXLB')
+    : (thermalCap ? 'GXLM' : 'GXLBM');
+
+  return {
+    variant, maxSkylightOk,
+    panelW, panelH, qty, cutQty: qty, panelPrice, glassSQMTotal,
+    glazingTotal, matLines, matTotal,
+    labLines: { 'Assembly Labour': labTotal }, labTotal,
+    fabTotal: labTotal + packTotal,
+    packLines: { 'Packaging': packTotal }, packTotal,
+    instLines: { 'Installation': 0 }, instTotal: 0,
+    totalCost, margins, joinSegments: 0
+  };
+}
+
+/* ============================================================
+   STATE & PERSISTENCE
+   Price resolution order:
+   1. Shared prices.json (the company master, fetched on load)
+   2. Baked-in DEFAULTS (fallback if running as a standalone file)
+   The in-browser editor is a PERSONAL override only, never the master.
+   ============================================================ */
+function loadLocalOverride(){
+  try { const s = localStorage.getItem('gsa_prices_override'); if(s) return JSON.parse(s); } catch(e){}
+  return null;
+}
+function saveLocalOverride(p){ try { localStorage.setItem('gsa_prices_override', JSON.stringify(p)); } catch(e){} }
+function clearLocalOverride(){ try { localStorage.removeItem('gsa_prices_override'); } catch(e){} }
+
+let PRICES = JSON.parse(JSON.stringify(DEFAULTS));
+let PRICE_SOURCE = 'built-in';
+
+/* ------------------------------------------------------------
+   WHERE LIVE PRICES COME FROM
+   Power Automate injects LIVE_PRICES_RAW into this file directly
+   whenever Skyspan_Master_Pricing.xlsx is saved in SharePoint.
+   No network fetch required — prices are baked into this file.
+
+   OFFLINE / LOCAL FALLBACK:
+   When live prices load successfully they are saved to localStorage.
+   If the file is later opened locally (e.g. for PDF), the cached
+   prices are used so you always get the last-known master rates.
+   ------------------------------------------------------------ */
+const CACHE_KEY   = 'skyspan_live_prices_cache';
+const CACHE_TS_KEY = 'skyspan_live_prices_ts';
+
+function savePriceCache(raw){
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(raw));
+    localStorage.setItem(CACHE_TS_KEY, new Date().toISOString());
+  } catch(e){}
+}
+function loadPriceCache(){
+  try {
+    const s = localStorage.getItem(CACHE_KEY);
+    const ts = localStorage.getItem(CACHE_TS_KEY);
+    if(s) return { raw: JSON.parse(s), ts: ts || null };
+  } catch(e){}
+  return null;
+}
+
+async function initPrices(){
+  // 1. Use prices injected by Power Automate if available (no fetch/CORS needed)
+  if(typeof LIVE_PRICES_RAW !== 'undefined' && LIVE_PRICES_RAW && LIVE_PRICES_RAW.glass){
+    PRICES = normalisePrices(LIVE_PRICES_RAW);
+    PRICE_SOURCE = 'shared';
+    savePriceCache(LIVE_PRICES_RAW);   // ← keep a local copy for offline use
+    return;
+  }
+
+  // 2. Try the localStorage cache (covers locally-opened copies for PDF printing)
+  const cached = loadPriceCache();
+  if(cached && cached.raw){
+    PRICES = normalisePrices(cached.raw);
+    const fmtDate = cached.ts
+      ? new Date(cached.ts).toLocaleString('en-AU', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})
+      : 'unknown time';
+    PRICE_SOURCE = `cached (${fmtDate})`;
+    return;
+  }
+
+  // 3. a personal override, if the user saved one, wins for THIS browser only
+  const ov = loadLocalOverride();
+  if(ov){ PRICES = ov; PRICE_SOURCE = 'personal override'; }
+
+  // 4. Absolute fallback — built-in DEFAULTS (prices may be out of date)
+  // PRICES is already set to DEFAULTS at declaration above
+}
+
+/* ============================================================
+   UI WIRING
+   ============================================================ */
+const $ = id => document.getElementById(id);
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-AU'); }
+function fmtMM(n){ return Math.round(n).toLocaleString('en-AU') + ' mm'; }
+
+function populateSelects(){
+  // the frame dropdown is rebuilt inside render(), because its options
+  // depend on the roof length and glazing type
+  populateGlassSelect();
+}
+
+// glass dropdown shows only products matching the chosen single/double glazing
+function populateGlassSelect(){
+  const gl = $('glass');
+  const all = activeGlassList();
+  const avail = availableGlass();
+  const prevIdx = parseInt(gl.value);
+  const prevGlass = isFinite(prevIdx) ? all[prevIdx] : null;
+
+  gl.innerHTML = avail.map(g =>
+    `<option value="${all.indexOf(g)}">${g.name} — ${fmtMoney(g.rate)}/m²</option>`
+  ).join('');
+
+  // keep the current glass if it survives the filter, else take the first
+  if(prevGlass && avail.includes(prevGlass)){
+    gl.value = String(all.indexOf(prevGlass));
+  } else if(avail.length){
+    gl.value = String(all.indexOf(avail[0]));
+  }
+}
+
+function buildSchematic(W, L, cols, rows, spanW, spanL){
+  const maxW=440, maxH=240, scale=Math.min(maxW/W, maxH/L);
+  const dw=W*scale, dh=L*scale, ox=(560-dw)/2, oy=42;
+  const pw=dw/cols, ph=dh/rows;
+  let s=`<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" rx="3" fill="none" stroke="var(--ink-faint)" stroke-width="2"/>`;
+  for(let c=0;c<cols;c++) for(let r=0;r<rows;r++){
+    const x=ox+c*pw, y=oy+r*ph;
+    s+=`<rect x="${x+1.5}" y="${y+1.5}" width="${pw-3}" height="${ph-3}" rx="2" fill="var(--sky-soft)" stroke="var(--sky)" stroke-width="0.5"/>`;
+    if(pw>54 && ph>26) s+=`<text x="${x+pw/2}" y="${y+ph/2}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="var(--ink-soft)">${Math.round(spanW)}×${Math.round(spanL)}</text>`;
+  }
+  for(let c=1;c<cols;c++){ const x=ox+c*pw; s+=`<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="var(--ink-faint)" stroke-width="1.25" opacity="0.55"/>`; }
+  for(let r=1;r<rows;r++){ const y=oy+r*ph; s+=`<line x1="${ox}" y1="${y}" x2="${ox+dw}" y2="${y}" stroke="var(--fall)" stroke-width="2.25" opacity="0.85"/>`; }
+  s+=`<text x="${ox+dw/2}" y="${oy-14}" text-anchor="middle" font-size="10" fill="var(--ink-faint)">${Math.round(W)} mm — ${cols-1} mullion${cols-1!==1?'s':''}</text>`;
+  s+=`<text x="${ox+dw+14}" y="${oy+dh/2}" text-anchor="middle" font-size="10" fill="var(--ink-faint)" transform="rotate(90 ${ox+dw+14} ${oy+dh/2})">${Math.round(L)} mm</text>`;
+  if(rows>1){
+    const fx=ox-22;
+    s+=`<line x1="${fx}" y1="${oy+8}" x2="${fx}" y2="${oy+dh-8}" stroke="var(--fall)" stroke-width="1.5" marker-end="url(#fall-arr)"/>`;
+    s+=`<text x="${fx-7}" y="${oy+dh/2}" text-anchor="middle" font-size="9" fill="var(--fall)" transform="rotate(-90 ${fx-7} ${oy+dh/2})">fall</text>`;
+  }
+  return `<svg viewBox="0 0 560 ${oy+dh+20}" xmlns="http://www.w3.org/2000/svg"><defs><marker id="fall-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--fall)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>${s}</svg>`;
+}
+
+function suggestFix(W, L, rows, pitch, type, thk, curCols){
+  for(let cols=curCols+1; cols<=80; cols++){
+    const mull = cols - 1;
+    const clearW = (W - mull * 50) / cols;
+    const clearL = L / rows;
+    if(checkAS1288(clearW, clearL, pitch, type, thk).ok) return mull;
+  }
+  return null;
+}
+
+/* ============================================================
+   PLAN VIEW  <->  ACTUAL GLASS SIZE
+   On a single-plane roof the fall runs one way, so only the LENGTH
+   is foreshortened in plan view. Width across the slope is horizontal
+   in both views and passes through unchanged.
+       actual length = plan length / cos(pitch)
+       plan  length  = actual length * cos(pitch)
+   ============================================================ */
+function clampPitch(deg){
+  if(!isFinite(deg) || deg < 0) return 0;
+  return Math.min(deg, 85);           // cos() collapses toward 0 beyond this
+}
+let syncing = false;                   // guards against feedback loops
+
+function syncFromPlan(){
+  if(syncing) return; syncing = true;
+  const deg = clampPitch(parseFloat($('pitchDeg').value));
+  const rad = deg * Math.PI / 180;
+  const pw = parseFloat($('planW').value);
+  const pl = parseFloat($('planL').value);
+  if(isFinite(pw)) $('ow').value = Math.round(pw);
+  if(isFinite(pl)) $('ol').value = Math.round(pl / Math.cos(rad));
+  markDerived('actual');
+  syncing = false;
+  render();
+}
+
+function syncFromActual(){
+  if(syncing) return; syncing = true;
+  const deg = clampPitch(parseFloat($('pitchDeg').value));
+  const rad = deg * Math.PI / 180;
+  const aw = parseFloat($('ow').value);
+  const al = parseFloat($('ol').value);
+  if(isFinite(aw)) $('planW').value = Math.round(aw);
+  if(isFinite(al)) $('planL').value = Math.round(al * Math.cos(rad));
+  markDerived('plan');
+  syncing = false;
+  render();
+}
+
+// which row was calculated (vs typed) — shown subtly so nobody mistakes one for the other
+let lastEdited = 'actual';
+function markDerived(which){
+  lastEdited = which === 'actual' ? 'plan' : 'actual';
+  ['planW','planL'].forEach(id => $(id).classList.toggle('derived', which === 'plan'));
+  ['ow','ol'].forEach(id => $(id).classList.toggle('derived', which === 'actual'));
+  const arrow = $('sizeDir');
+  if(arrow) arrow.textContent = which === 'actual' ? '↓  calculated from pitch' : '↑  calculated from pitch';
+}
+
+function updatePitchNote(){
+  const deg = clampPitch(parseFloat($('pitchDeg').value));
+  const el = $('pitchNote');
+  if(!el) return;
+  const factor = (1 / Math.cos(deg * Math.PI / 180));
+  if(deg < 3){
+    el.className = 'pitch-note warn';
+    el.innerHTML = `AS 1288 cl. 6.4.2 requires a minimum 3° slope to avoid water ponding.`;
+  } else {
+    el.className = 'pitch-note';
+    el.innerHTML = `Length ×${factor.toFixed(3)} from plan to actual.`;
+  }
+}
+
+/* ============================================================
+   GLASS LIST RESOLUTION
+   prices.json groups glass by list name; products point at a list.
+   (Product selector is a later phase — GSA uses STANDARD.)
+   ============================================================ */
+function activeProductCode(){ return 'GSA'; }
+
+function activeGlassList(){
+  const code = activeProductCode();
+  let listName = 'STANDARD';
+  if(PRICES.products){
+    const p = PRICES.products.find(x => x.code === code);
+    if(p && p.glassList) listName = p.glassList;
+  }
+  if(PRICES.glassLists && PRICES.glassLists[listName]) return PRICES.glassLists[listName];
+  return PRICES.glass || [];      // fallback for the older flat format
+}
+
+// glass filtered to the selected single/double glazing
+function availableGlass(){
+  const want = ($('glazing').value === 'dg') ? 'DG' : 'SG';
+  return activeGlassList().filter(g => {
+    const gz = (g.glazing || '').toUpperCase();
+    // if a row has no glazing flag, infer it: a second lite means double
+    if(!gz) return want === (Number(g.lite2) > 0 ? 'DG' : 'SG');
+    return gz === want;
+  });
+}
+
+/* ------------------------------------------------------------
+   Minimum mullions for a given glass, at the current size.
+   Increasing mullions narrows each panel; the panel length is
+   fixed by the transom count, so if the length alone busts the
+   glass envelope no mullion count can rescue it.
+   ------------------------------------------------------------ */
+function minMullionsFor(g, W, L, trans, pitch){
+  const rows = trans + 1;
+  const clearL = L / rows;
+  const maxA = (g.maxA == null) ? Infinity : g.maxA; // Max Width
+  const maxB = (g.maxB == null) ? Infinity : g.maxB; // Max Length
+
+  if(clearL > maxB + EPS){
+    return { ok:false, reason:'needs transoms',
+             detail:`panel length ${Math.round(clearL)} mm exceeds maximum glass length (${Math.round(maxB)} mm)` };
+  }
+  for(let cols = 1; cols <= 200; cols++){
+    const mull = cols - 1;
+    const clearW = (W - mull * 50) / cols;
+    const panelW = (W + 50) / cols - 25;
+    if(clearW <= 0) break;
+    if(!fitsEnvelope(panelW, clearL, maxA, maxB)) continue;
+    const c = checkAS1288(clearW, clearL, pitch, g.type, g.thk);
+    if(c.noData) return { ok:false, reason:'no AS1288 data', detail:`no span table for ${g.thk} mm` };
+    if(c.notPermitted) return { ok:false, reason:'not permitted', detail:`AS 1288 Table 6.2 does not allow 6.38mm annealed glass under 30°` };
+    if(c.ok) return { ok:true, mullions: mull, clearW, clearL, panels: cols * rows };
+  }
+  return { ok:false, reason:'not achievable', detail:'no mullion count up to 199 satisfies both limits' };
+}
+
+function fitsEnvelope(panelW, panelL, maxA, maxB){
+  return panelW <= maxA + EPS && panelL <= maxB + EPS;
+}
+
+function renderGlassOptions(W, L, trans, pitch, selectedIdx){
+  const el = $('glassOptions');
+  if(!el) return;
+  const list = availableGlass();
+  const all = activeGlassList();
+
+  if(!list.length){
+    el.innerHTML = `<div class="go-empty">No ${$('glazing').value === 'dg' ? 'double' : 'single'} glazed products in this glass list.</div>`;
+    return;
+  }
+
+  const rows = list.map(g => {
+    const res = minMullionsFor(g, W, L, trans, pitch);
+    return { g, res, idx: all.indexOf(g) };
+  }).sort((a,b) => {
+    if(a.res.ok !== b.res.ok) return a.res.ok ? -1 : 1;
+    if(a.res.ok) return a.res.mullions - b.res.mullions;
+    return 0;
+  });
+
+  // preserve open/closed state across re-renders
+  const wasOpen = el.classList && typeof el.classList.contains === 'function' && el.classList.contains('open');
+
+  el.innerHTML = `
+    <div class="go-head" onclick="this.closest('.glass-options').classList.toggle('open')">
+      <span><span class="go-chev">&#9658;</span>Glass options — minimum mullions required</span>
+      <span style="text-transform:none; letter-spacing:0; font-weight:400;">${Math.round(W)} × ${Math.round(L)} mm, ${trans} transom${trans!==1?'s':''}</span>
+    </div>
+    <div class="go-body">
+      <table>
+        <thead><tr>
+          <th>Glass</th><th class="r">$/m²</th><th class="r">Max size</th><th class="r">Min mullions</th><th class="r">Panel</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(({g,res,idx}) => {
+            const sel = idx === selectedIdx ? 'selected' : '';
+            const avail = res.ok ? '' : 'unavailable';
+            const maxTxt = (g.maxA && g.maxB) ? `${Math.round(g.maxA)}\u00d7${Math.round(g.maxB)}` : '\u2014';
+            const mullTxt = res.ok
+              ? `<span class="go-mull">${res.mullions}</span>`
+              : `<span class="${res.reason==='needs transoms' ? 'go-warn' : 'go-none'}">${res.reason}</span>`;
+            const panelTxt = res.ok ? `${Math.round(res.clearW)}\u00d7${Math.round(res.clearL)}` : '\u2014';
+            return `<tr class="${sel} ${avail}" data-idx="${idx}" data-mull="${res.ok?res.mullions:''}" title="${res.ok?'Click to use this glass and mullion count':res.detail}">
+              <td class="go-name">${g.name}</td>
+              <td class="r">$${Math.round(g.rate)}</td>
+              <td class="r">${maxTxt}</td>
+              <td class="r">${mullTxt}</td>
+              <td class="r">${panelTxt}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // restore open state if it was open before re-render
+  if(wasOpen) el.classList.add('open');
+
+  el.querySelectorAll('tbody tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const idx = tr.dataset.idx, mull = tr.dataset.mull;
+      if(idx !== '') $('glass').value = idx;
+      if(mull !== '') $('mullions').value = mull;
+      render();
+    });
+  });
+}
+
+/* ============================================================
+   FRAME SELECTION
+   "Main frame?" = does the building already have a structure?
+     Yes -> Skyspan supplies a subframe onto it
+     No  -> Skyspan supplies the mainframe itself
+   A mullion runs the full roof length, so a frame section is only
+   offered if its max mullion span covers that length. Double glazing
+   is heavier, so its limit is lower.
+   ============================================================ */
+function wantedFrameType(){
+  return $('hasMainframe').value === 'yes' ? 'Subframe' : 'Mainframe';
+}
+
+function frameMaxSpan(f, dg){
+  const v = dg ? f.maxSpanDG : f.maxSpanSG;
+  return (v == null) ? Infinity : v;
+}
+
+// every frame of the right type, each tagged with whether it can span the roof
+function frameCandidates(mullionSpan, dg){
+  const want = wantedFrameType();
+  return (PRICES.subframe || [])
+    .filter(f => {
+      const t = (f.frameType || 'Both').toLowerCase();
+      return t === 'both' || t === want.toLowerCase();
+    })
+    .map(f => {
+      const max = frameMaxSpan(f, dg);
+      return { f, max, ok: mullionSpan <= max + EPS };
+    });
+}
+
+function populateFrameSelect(mullionSpan, dg){
+  const sel = $('subframe');
+  const cands = frameCandidates(mullionSpan, dg);
+  const prev = sel.value;
+  const prevName = (PRICES.subframe && PRICES.subframe[prev]) ? PRICES.subframe[prev].name : null;
+
+  sel.innerHTML = cands.map(({f, max, ok}) => {
+    const i = PRICES.subframe.indexOf(f);
+    const cap = (max === Infinity) ? '' : ` — spans ${Math.round(max)} mm`;
+    const bad = ok ? '' : ' (max span exceeded)';
+    return `<option value="${i}" ${ok ? '' : 'disabled'}>${f.name}${cap}${bad}</option>`;
+  }).join('');
+
+  // keep the current pick if it survives, else fall back to the first usable one
+  const stillOk = cands.find(c => c.ok && c.f.name === prevName);
+  if(stillOk){
+    sel.value = String(PRICES.subframe.indexOf(stillOk.f));
+  } else {
+    const firstOk = cands.find(c => c.ok);
+    if(firstOk) sel.value = String(PRICES.subframe.indexOf(firstOk.f));
+    else if(cands.length) sel.value = String(PRICES.subframe.indexOf(cands[0].f));
+  }
+
+  $('frameLabel').textContent = wantedFrameType() === 'Subframe' ? 'Subframe' : 'Mainframe';
+
+  const blocked = cands.filter(c => !c.ok);
+  const usable = cands.filter(c => c.ok);
+  const hint = $('frameHint');
+  if(!usable.length){
+    hint.innerHTML = `<span style="color:var(--red);font-weight:600;">No ${wantedFrameType().toLowerCase()} option can span a ${Math.round(mullionSpan)} mm mullion${dg ? ' in double glazing' : ''}. Add a transom to shorten the mullion, or switch to a mainframe.</span>`;
+  } else if(blocked.length){
+    hint.textContent = `${blocked.length} option${blocked.length>1?'s':''} hidden — can't span a ${Math.round(mullionSpan)} mm mullion${dg ? ' in double glazing' : ''}.`;
+  } else {
+    hint.textContent = `Mullion span ${Math.round(mullionSpan)} mm — all ${wantedFrameType().toLowerCase()} options suit.`;
+  }
+  return usable.length > 0;
+}
+
+/* ============================================================
+   RAW EXCEL TABLE ADAPTER
+   Power Automate can dump the workbook's tables as-is, with Excel's
+   own column names as keys. Reshaping that in Power Automate is
+   painful, so we do it here instead. Accepts either:
+     - the final nested shape (from build_prices.py), or
+     - raw tables: { products:[], glass:[], labour:[], frames:[], fixed:[] }
+   ============================================================ */
+function num(v){
+  if(v === null || v === undefined || v === '' ) return null;
+  const n = Number(String(v).replace(/[^0-9.\-]/g,''));
+  return isFinite(n) ? n : null;
+}
+function pick(row, ...names){
+  for(const n of names){ if(row[n] !== undefined) return row[n]; }
+  return undefined;
+}
+
+const LABOUR_KEYS = {
+  'Fabrication labour ($/min)':        ['labour','fab'],
+  'Installation labour ($/min)':       ['labour','install'],
+  'Double-sided tape ($/roll, 30.5m)': ['materials','tape'],
+  'Glazing rubber ($/roll, 100m)':     ['materials','rubber'],
+  'Angle 40x40x3 ($)':                 ['materials','angle'],
+  'Rivet ($ each)':                    ['materials','rivet'],
+  'Silicone ($ each)':                 ['materials','silicone'],
+  'Cleat ($ each)':                    ['materials','cleat'],
+  'Zincalume flashing ($/m2)':         ['materials','zinc'],
+  'Single glaze side suite ($/pc)':    ['suite','sideSG'],
+  'Double glaze side suite ($/pc)':    ['suite','sideDG'],
+  'Single glaze mullion suite ($/pc)': ['suite','mullSG'],
+  'Double glaze mullion suite ($/pc)': ['suite','mullDG'],
+};
+const FIXED_KEYS = {
+  'Painting minutes — DG':'paintDG', 'Painting minutes - DG':'paintDG',
+  'Painting minutes — SG':'paintSG', 'Painting minutes - SG':'paintSG',
+  'Paint / powdercoat ($)':'paintCost',
+  'Others ($)':'others',
+  'Packaging ($)':'packaging',
+  'Packing labour (min)':'packLabourMin',
+  'RHS stock length (mm)':'stockLen',
+};
+const FRAME_IDS = ['plant','al50x25','al50x50','al50x100','st50x100'];
+
+function isRawTables(d){
+  return d && Array.isArray(d.glass) && !d.glassLists;
+}
+
+function adaptRawTables(d){
+  const out = { products:[], glassLists:{}, labour:{}, materials:{},
+                suite:{}, subframe:[], fixed:{} };
+
+  (d.products || []).forEach(r => {
+    const code = pick(r,'Code');
+    const name = pick(r,'Product name');
+    const list = pick(r,'Glass List');
+    if(!code || !name || !list) return;
+    out.products.push({ code:String(code).trim(), name, glassList:String(list).trim(),
+                        engine: pick(r,'Engine'), notes: pick(r,'Notes') });
+  });
+
+  (d.glass || []).forEach(r => {
+    const list = pick(r,'List Name');
+    const name = pick(r,'Glass product (as shown in calculator)','Glass product');
+    const rate = num(pick(r,'Rate $/m2','Rate $/m²'));
+    if(!list || !name || rate === null) return;          // skip blank/placeholder rows
+    const lite2 = num(pick(r,'Lite 2 mm')) || 0;
+    const gz = String(pick(r,'Glazing') || '').trim().toUpperCase();
+    (out.glassLists[list] = out.glassLists[list] || []).push({
+      name, rate,
+      glazing: gz || (lite2 > 0 ? 'DG' : 'SG'),
+      type:  pick(r,'AS1288 type'),
+      thk:   num(pick(r,'Lite 1 lam mm (AS1288)','Lite 1 lam mm')),
+      lite2,
+      total: num(pick(r,'Total glass mm')) || 0,
+      maxA:  num(pick(r,'Max size A mm')),
+      maxB:  num(pick(r,'Max size B mm')),
+    });
+  });
+
+  (d.labour || []).forEach(r => {
+    const k = String(pick(r,'Item') || '').trim();
+    const v = num(pick(r,'Value'));
+    const map = LABOUR_KEYS[k];
+    if(map && v !== null) out[map[0]][map[1]] = v;
+  });
+
+  (d.frames || d.subframes || []).forEach((r,i) => {
+    const nm = pick(r,'Frame','Subframe');
+    if(!nm) return;
+    out.subframe.push({
+      id: FRAME_IDS[i] || ('sf'+i),
+      name: nm,
+      sg:   num(pick(r,'SG $/pc')) || 0,
+      dg:   num(pick(r,'DG $/pc')) || 0,
+      sect: num(pick(r,'Section width mm')) || 0,
+      frameType: String(pick(r,'Frame type') || 'Both').trim(),
+      maxSpanSG: num(pick(r,'SG max mullion span mm')),
+      maxSpanDG: num(pick(r,'DG max mullion span mm')),
+    });
+  });
+
+  (d.fixed || []).forEach(r => {
+    const k = String(pick(r,'Item') || '').trim();
+    const v = num(pick(r,'Value'));
+    const key = FIXED_KEYS[k];
+    if(key && v !== null) out.fixed[key] = v;
+  });
+
+  return out;
+}
+
+let calcMode = 'gsa';
+
+// Per-tab saved state — each tab remembers its own W/L/pitch/mullions independently
+const modeState = {
+  gsa:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'0', transoms:'0' },
+  gxl:  { planW:'', planL:'', ow:'', ol:'', pitch:'3' },
+  gxlm: { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'1' },
+};
+
+function saveCurrentModeState(){
+  const s = modeState[calcMode];
+  if(!s) return;
+  s.planW    = $('planW')?.value    ?? '';
+  s.planL    = $('planL')?.value    ?? '';
+  s.ow       = $('ow')?.value       ?? '';
+  s.ol       = $('ol')?.value       ?? '';
+  s.pitch    = $('pitchDeg')?.value ?? '3';
+  if(s.mullions !== undefined) s.mullions = $('mullions')?.value ?? '0';
+  if(s.transoms !== undefined) s.transoms = $('transoms')?.value ?? '0';
+}
+
+function restoreModeState(mode){
+  const s = modeState[mode];
+  if(!s) return;
+  if($('planW'))   $('planW').value   = s.planW;
+  if($('planL'))   $('planL').value   = s.planL;
+  if($('ow'))      $('ow').value      = s.ow;
+  if($('ol'))      $('ol').value      = s.ol;
+  if($('pitchDeg')) $('pitchDeg').value = s.pitch;
+  if(s.mullions !== undefined && $('mullions')) $('mullions').value = s.mullions;
+  if(s.transoms !== undefined && $('transoms')) $('transoms').value = s.transoms;
+  // also sync the pitch note display
+  if(typeof syncFromPlan === 'function') syncFromPlan();
+}
+
+function setCalcMode(mode){
+  saveCurrentModeState();   // ← save outgoing tab's sizes
+  calcMode = mode;
+  const tabGsa=$('tabGsa'), tabGxl=$('tabGxl'), tabGxlm=$('tabGxlm');
+  if(tabGsa)  tabGsa.classList.toggle('active',  mode==='gsa');
+  if(tabGxl)  tabGxl.classList.toggle('active',  mode==='gxl');
+  if(tabGxlm) tabGxlm.classList.toggle('active', mode==='gxlm');
+
+  const appTitle       = $('appTitle');
+  const appSub         = $('appSub');
+  const thermalCapFld  = $('thermalCapField');
+  const badge          = $('gxlVariantBadge');
+  const hasMainframe   = $('hasMainframe');
+  const subframeSel    = $('subframe');
+  const mullionFld     = $('mullionField');
+  const transomFld     = $('transomField');
+  const mullTransHint  = $('mullTransomHint');
+  const transomEl      = $('transoms');
+  const mullionEl      = $('mullions');
+  const advRow         = $('advFlashingToggleRow');
+  const advPanel       = $('advFlashingPanel');
+
+  if(mode === 'gxl'){
+    if(appTitle)  appTitle.textContent = 'GXL Skylight Calculator (Single Panel)';
+    if(appSub)    appSub.textContent   = 'Single-panel GXL / GXLB Skylights — Thermal & Non-Thermal Cap — Skyspan';
+    if(thermalCapFld) thermalCapFld.style.display = 'block';
+    if(badge)     badge.style.display = 'inline-block';
+    // hide subframe + mainframe
+    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
+    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
+    // hide ALL mullion/transom UI
+    if(mullionFld)    mullionFld.style.display    = 'none';
+    if(transomFld)    transomFld.style.display    = 'none';
+    if(mullTransHint) mullTransHint.style.display = 'none';
+    if(mullionEl)     { mullionEl.value = 0; }
+    if(transomEl)     { transomEl.value = 0; }
+    if(advRow)    advRow.style.display  = 'block';
+  } else if(mode === 'gxlm'){
+    if(appTitle)  appTitle.textContent = 'GXLM Modular Skylight Calculator';
+    if(appSub)    appSub.textContent   = 'Multi-panel GXLM / GXLBM Skylights with Mullions — Skyspan';
+    if(thermalCapFld) thermalCapFld.style.display = 'block';
+    if(badge)     badge.style.display = 'inline-block';
+    // hide subframe + mainframe
+    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
+    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
+    // show MULLIONS only (no transoms on GXL products)
+    if(mullionFld)    mullionFld.style.display    = 'block';
+    if(transomFld)    transomFld.style.display    = 'none';
+    if(mullTransHint) mullTransHint.style.display = 'block';
+    if(transomEl)     { transomEl.value = 0; }
+    if(mullionEl && parseInt(mullionEl.value,10) < 1) mullionEl.value = 1;
+    if(advRow)    advRow.style.display  = 'block';
+  } else {
+    // GSA mode
+    if(appTitle)  appTitle.textContent = 'GSA Glass Roof Calculator';
+    if(appSub)    appSub.textContent   = 'Panel layout, AS 1288 compliance & live costing — Skyspan';
+    if(thermalCapFld) thermalCapFld.style.display = 'none';
+    if(badge)     badge.style.display = 'none';
+    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'block';
+    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'block';
+    if(mullionFld)    mullionFld.style.display    = 'block';
+    if(transomFld)    transomFld.style.display    = 'block';
+    if(mullTransHint) mullTransHint.style.display = 'block';
+    if(advRow)    advRow.style.display  = 'none';
+    if(advPanel)  advPanel.style.display = 'none';
+  }
+  restoreModeState(mode);  // ← restore incoming tab's sizes
+  render();
+}
+
+function toggleAdvFlashing() {
+  const panel = $('advFlashingPanel');
+  const btn = $('advFlashingToggle');
+  const chev = $('advFlashingChev');
+  const open = panel && panel.style.display !== 'none';
+  if(panel) panel.style.display = open ? 'none' : 'block';
+  if(btn) btn.setAttribute('aria-expanded', !open);
+}
+
+function normalisePrices(d){
+  const shaped = isRawTables(d) ? adaptRawTables(d) : d;
+  const merged = JSON.parse(JSON.stringify(DEFAULTS));
+  ['labour','materials','suite','fixed'].forEach(g => Object.assign(merged[g], shaped[g] || {}));
+  if(shaped.products   && shaped.products.length)             merged.products   = shaped.products;
+  if(shaped.subframe   && shaped.subframe.length)             merged.subframe   = shaped.subframe;
+  if(shaped.glassLists && Object.keys(shaped.glassLists).length) merged.glassLists = shaped.glassLists;
+  return merged;
+}
+
+function render(){
+  const W=parseFloat($('ow').value), L=parseFloat($('ol').value);
+  const pitchDeg = clampPitch(parseFloat($('pitchDeg').value));
+  const pitch = pitchDeg < 30 ? 'low' : 'high';
+  const isGXLMode = (calcMode === 'gxl' || calcMode === 'gxlm');
+  const mull = calcMode === 'gxl' ? 0 : (parseInt($('mullions').value)||0);
+  const trans = isGXLMode ? 0 : (parseInt($('transoms').value)||0);
+  const dg = $('glazing').value==='dg';
+  const mullionSpan = L || 0;
+  const frameOk = isGXLMode ? true : populateFrameSelect(mullionSpan, dg);
+  const subframe = PRICES.subframe[parseInt($('subframe').value)] || PRICES.subframe[3];
+  const res = $('results');
+  const glassAll = activeGlassList();
+  const glassIdx = parseInt($('glass').value);
+  const glass = glassAll[glassIdx] || availableGlass()[0] || glassAll[0];
+  if(!glass){
+    res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>No glass products available for this selection. Check the Glass Lists tab of the master pricing workbook.</span></div>';
+    return;
+  }
+  renderGlassOptions(W, L, trans, pitch, glassAll.indexOf(glass));
+
+  $('glassHint').textContent = `AS 1288 check uses the ${glass.type==='lam_annealed'?'laminated annealed':'laminated heat-strengthened'} inner lite at ${glass.thk} mm.`;
+
+  if(!W || !L){ res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width, length, and mullion counts to price the job.</span></div>'; return; }
+
+  const cols=mull+1, rows=trans+1;
+  const clearW = (W - mull * 50) / cols;
+  const clearL = L / rows;
+  const comp = checkAS1288(clearW, clearL, pitch, glass.type, glass.thk);
+
+  const gMaxA = (glass.maxA == null) ? Infinity : glass.maxA;
+  const gMaxB = (glass.maxB == null) ? Infinity : glass.maxB;
+  const thermalCap = isGXLMode ? ($('thermalCap').value === 'on') : true;
+
+  const packVal = parseFloat($('packagingOverride')?.value);
+  const extra = {
+    instGlaze2Min: parseFloat($('instGlaze2Min')?.value)||0,
+    instGlaze2Qty: parseFloat($('instGlaze2Qty')?.value)||0,
+    join2Min: parseFloat($('join2Min')?.value)||0,
+    join2Qty: parseFloat($('join2Qty')?.value)||0,
+    makeupMin: parseFloat($('makeupMin')?.value)||0,
+    makeupQty: parseFloat($('makeupQty')?.value)||0,
+    cleatsQty: $('cleatsQty')?.value === '' ? null : (parseFloat($('cleatsQty')?.value)||null),
+    glassExtraPerPanel: parseFloat($('glassExtraPerPanel')?.value)||0,
+    instGlazeFabMin: parseFloat($('instGlazeFabMin')?.value)||0,
+    cutCleatsMin: $('cutCleatsMin')?.value === '' ? null : (parseFloat($('cutCleatsMin')?.value)||null),
+    weldCleatsMin: $('weldCleatsMin')?.value === '' ? null : (parseFloat($('weldCleatsMin')?.value)||null),
+    paintMin: $('paintMin')?.value === '' ? null : (parseFloat($('paintMin')?.value)||null),
+    tapeMin: $('tapeMin')?.value === '' ? null : (parseFloat($('tapeMin')?.value)||null),
+    fabRate: $('fabRate')?.value === '' ? null : (parseFloat($('fabRate')?.value)||null),
+    installRate: $('installRate')?.value === '' ? null : (parseFloat($('installRate')?.value)||null),
+    instMen: parseFloat($('instMen')?.value)||4,
+    othersOverride: $('othersOverride')?.value === '' ? null : (parseFloat($('othersOverride')?.value)||null),
+    paintCostOverride: $('paintCostOverride')?.value === '' ? null : (parseFloat($('paintCostOverride')?.value)||null),
+    miscCost: parseFloat($('miscCost')?.value)||0,
+    drawingCost: parseFloat($('drawingCost')?.value)||0,
+    retentionCost: parseFloat($('retentionCost')?.value)||0,
+    travelCost: parseFloat($('travelCost')?.value)||0,
+    cranageCost: parseFloat($('cranageCost')?.value)||0,
+    packaging: isNaN(packVal) ? null : packVal
+  };
+
+  const r = isGXLMode
+    ? calculateGXL(PRICES, {
+        W, L, mull, thermalCap, dg, glass,
+        throatH:   parseFloat($('throatH')?.value   ?? 70),
+        downturnL: parseFloat($('downturnL')?.value ?? 60),
+        flashE:    parseFloat($('flashE')?.value    ?? 200),
+        flashF:    parseFloat($('flashF')?.value    ?? 200),
+        flashG:    parseFloat($('flashG')?.value    ?? 200),
+        flashH:    parseFloat($('flashH')?.value    ?? 200)
+      })
+    : calculate(PRICES, { W, L, mull, trans, dg, glass, subframe, extra });
+
+  if(isGXLMode && $('gxlVariantBadge')) {
+    $('gxlVariantBadge').textContent = r.variant;
+  }
+
+  const sizeOk = fitsEnvelope(r.panelW, r.panelH || clearL, gMaxA, gMaxB);
+  const skylightOk = isGXLMode ? r.maxSkylightOk : true;
+  const minReq = sizeOk ? null : minMullionsFor(glass, W, L, trans, pitch);
+
+  // ---- 2000 mm max panel WIDTH rule (width only — driven by mullion count) ----
+  const MAX_PANEL_W = 2000;
+  const panelWidthOk = clearW <= MAX_PANEL_W;
+  // minimum mullions to bring panel width under 2000 mm
+  const minMullW = panelWidthOk ? null : Math.ceil(W / MAX_PANEL_W) - 1;
+
+  // ---- status flags: manufacturing size first, then AS 1288 ----
+  const maxTxt = `${Math.round(gMaxA)} × ${Math.round(gMaxB)} mm (Max W×L)`;
+  let sizeErrHTML = '';
+  let flag='';
+
+  if(!skylightOk){
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>Exceeds maximum GXL/GXLM skylight size limit.</strong> Total skylight dimensions ${Math.round(W)} × ${Math.round(L)} mm exceed the 2,400 × 6,400 mm limit for GXL / GXLM.</div></div>`;
+  } else if(!panelWidthOk){
+    const fixBtn = minMullW !== null
+      ? `<br><button class="fix-btn" onclick="document.getElementById('mullions').value=${minMullW};render();">Set ${minMullW} mullion${minMullW!==1?'s':''}</button>` : '';
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>Panel width exceeds 2,000 mm limit.</strong> With ${mull} mullion${mull!==1?'s':''}, each panel is ${Math.round(clearW)} mm wide — the maximum individual panel width is 2,000 mm. Add mullions to divide the ${Math.round(W)} mm roof width into narrower panels.${fixBtn}</div></div>`;
+  } else if(!frameOk){
+    const kind = wantedFrameType().toLowerCase();
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>No ${kind} can span this roof.</strong>
+      The mullion runs the full ${Math.round(mullionSpan)} mm length${dg ? ' and double glazing is heavier' : ''},
+      which exceeds every ${kind} option. Add a transom to break the run, or ${kind === 'subframe' ? 'switch to a mainframe' : 'review the structure with engineering'}.</div></div>`;
+  } else if(!sizeOk){
+    const fixTxt = (minReq && minReq.ok)
+      ? ` Increase to at least <strong>${minReq.mullions} mullions</strong>, or pick a glass with a larger maximum size.`
+      : (minReq && minReq.reason === 'needs transoms')
+        ? ` The panel length alone (${Math.round(clearL)} mm) is over the limit, so more mullions won't help — add a transom or change glass.`
+        : ' No mullion count resolves this — change the glass or add transoms.';
+    const btn = (minReq && minReq.ok)
+      ? `<br><button class="fix-btn" onclick="document.getElementById('mullions').value=${minReq.mullions};render();">Set ${minReq.mullions} mullions</button>` : '';
+
+    sizeErrHTML = `<div class="flag fail" style="margin:14px 0 0;"><span class="ic">✕</span><div>
+      <strong>This glass can't be made at that size.</strong> The panel works out at
+      ${Math.round(r.panelW)} × ${Math.round(clearL)} mm, but the maximum for
+      ${glass.name} is ${maxTxt}.${fixTxt}${btn}</div></div>`;
+
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>Panel exceeds maximum glass size.</strong>
+      ${Math.round(r.panelW)} × ${Math.round(clearL)} mm vs a ${maxTxt} limit for this product.${fixTxt}${btn}</div></div>`;
+  } else if(comp.noData){
+    flag = `<div class="flag warn"><span class="ic">○</span><span>No AS 1288 4-edge span data for ${glass.thk} mm ${glass.type==='lam_annealed'?'annealed':'HS'} laminate — compliance not checked. Verify against the standard.</span></div>`;
+  } else if(comp.notPermitted){
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>AS 1288 Not Permitted.</strong> ${glass.name} (${glass.thk} mm annealed laminate) is not permitted for roof slopes under 30° (1.1 kN live load) under AS 1288 Table 6.2. Switch to a heat-strengthened or toughened glass product.</div></div>`;
+  } else if(comp.ok){
+    flag = `<div class="flag ok"><span class="ic">✓</span><span><strong>AS 1288 OK.</strong> Clear span ${Math.round(comp.span)} mm is within the ${Math.round(comp.maxSpan)} mm limit at AR ${comp.ar.toFixed(2)} (${pitch==='low'?'1.1 kN low pitch':'0.5 kN high pitch'}, 4-edge). Panel fits the ${maxTxt} glass limit.</span></div>`;
+  } else {
+    const fix = suggestFix(W, L, rows, pitch, glass.type, glass.thk, cols);
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>AS 1288 fail.</strong> Clear span ${Math.round(comp.span)} mm exceeds the ${Math.round(comp.maxSpan)} mm limit at AR ${comp.ar.toFixed(2)} for this glass.${fix!==null?` Minimum ${fix} mullions would pass, or use a stronger glass.`:' No mullion count up to 79 passes — use a stronger glass or add transoms.'}${fix!==null?`<br><button class="fix-btn" onclick="document.getElementById('mullions').value=${fix};render();">Set ${fix} mullions</button>`:''}</div></div>`;
+  }
+  $('sizeError').innerHTML = sizeErrHTML;
+
+  const statusPill = !skylightOk ? '<span class="badge-pill fail">✕ Exceeds 2400×6400 limit</span>'
+    : !panelWidthOk ? `<span class="badge-pill fail">✕ Panel width ${Math.round(clearW)} mm &gt; 2,000 mm limit</span>`
+    : !frameOk ? '<span class="badge-pill fail">✕ No frame spans</span>'
+    : !sizeOk ? '<span class="badge-pill fail">✕ Too large to make</span>'
+    : comp.noData ? '<span class="badge-pill warn">not checked</span>'
+    : comp.notPermitted ? '<span class="badge-pill fail">✕ Not Permitted by AS 1288</span>'
+    : comp.ok ? '<span class="badge-pill ok">✓ AS 1288 OK</span>'
+    : '<span class="badge-pill fail">✕ AS 1288 fail</span>';
+
+  const m50 = r.margins.find(m=>m.pct===50);
+
+  const jobRef = $('jobRef').value || '—';
+  const today = new Date().toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'});
+  const glazingLabel = dg ? 'Double glazed' : 'Single glazed';
+  const pitchLabel = `${pitchDeg}° (${pitch==='low' ? '<30°, 1.1 kN' : '≥30°, 0.5 kN'})`;
+  const planWv = Math.round(parseFloat($('planW').value)||0);
+  const planLv = Math.round(parseFloat($('planL').value)||0);
+  const docTitle = isGXLMode ? `Skylight (${r.variant}) — Job Costing Record` : 'GSA Glass Roof — Job Costing Record';
+  const printHeader = `
+    <div class="print-only">
+      <div class="print-header">
+        <div>
+          <div class="ph-title">${docTitle}</div>
+          <div class="ph-sub">Skyspan · internal pricing record · not a customer quote</div>
+        </div>
+        <div class="ph-meta">
+          <div><strong>Job:</strong> ${jobRef}</div>
+          <div>${today}</div>
+        </div>
+      </div>
+      <div class="print-spec">
+        <table>
+          <tr>
+            <td class="k">Actual glass size</td><td class="v">${Math.round(W)} × ${Math.round(L)} mm</td>
+            <td class="k">Glazing</td><td class="v">${glazingLabel}</td>
+          </tr>
+          <tr>
+            <td class="k">Plan view size</td><td class="v">${planWv} × ${planLv} mm</td>
+            <td class="k">Roof pitch</td><td class="v">${pitchDeg}°</td>
+          </tr>
+          <tr>
+            <td class="k">Grid</td><td class="v">${mull} mullion${mull!==1?'s':''} × ${trans} transom${trans!==1?'s':''} (${r.qty} panels)</td>
+            <td class="k">Live load case</td><td class="v">${pitch==='low' ? '1.1 kN (&lt;30°)' : '0.5 kN (≥30°)'}</td>
+          </tr>
+          <tr>
+            <td class="k">Glass</td><td class="v">${glass.name}</td>
+            <td class="k">Rate</td><td class="v">${fmtMoney(glass.rate)}/m²</td>
+          </tr>
+          <tr>
+            <td class="k">${wantedFrameType()}</td><td class="v">${subframe.name}</td>
+            <td class="k">Checks</td><td class="v">${!sizeOk ? 'EXCEEDS MAX GLASS SIZE — review' : comp.noData ? 'AS 1288 not checked' : comp.ok ? 'AS 1288 compliant' : 'AS 1288 FAIL — review'}</td>
+          </tr>
+        </table>
+      </div>
+    </div>`;
+
+  res.innerHTML = printHeader + `
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      <span>Result</span>${statusPill}
+    </h2>
+    ${flag}
+    <div class="schematic">${buildSchematic(W, L, cols, rows, clearW, clearL)}</div>
+    <div class="metrics">
+      <div class="metric"><div class="k">Clear panel span</div><div class="v">${fmtMM(clearW)} × ${fmtMM(clearL)}</div></div>
+      <div class="metric"><div class="k">Glass cut size</div><div class="v">${fmtMM(r.panelW)} × ${fmtMM(r.panelH)}</div></div>
+      ${r.glassSQMTotal ? `<div class="metric"><div class="k">Glass SQM</div><div class="v">${r.glassSQMTotal.toFixed(4)} m²</div></div>` : ''}
+      <div class="metric"><div class="k">Panels</div><div class="v">${r.qty}</div></div>
+    </div>
+
+${(sizeOk && skylightOk && panelWidthOk && frameOk && (comp.ok || comp.noData)) ? `
+    <div class="price-line"><span class="lbl">Materials &amp; Extrusions (inc. glazing ${r.glassSQMTotal ? r.glassSQMTotal.toFixed(4) + ' m² @ ' + fmtMoney(glass.rate) + '/m²' : ''})</span><span class="amt">${fmtMoney(r.matTotal)}</span></div>
+    <div class="price-line"><span class="lbl">Assembly Labour</span><span class="amt">${fmtMoney(r.labTotal)}</span></div>
+    ${r.packTotal > 0 ? `<div class="price-line"><span class="lbl">Packaging &amp; Paint</span><span class="amt">${fmtMoney(r.packTotal)}</span></div>` : ''}
+    <div class="cost-total"><span class="lbl">Total cost</span><span class="amt">${fmtMoney(r.totalCost)}</span></div>
+
+    <div class="margins">
+      <table>
+        <thead><tr><th>Margin</th><th class="r">Sell price</th><th class="r">Profit</th></tr></thead>
+        <tbody>
+          ${r.margins.map(m=>`<tr class="${m.pct===55?'highlight':''}"><td>${m.pct}%</td><td class="r">${fmtMoney(m.sell)}</td><td class="r">${fmtMoney(m.profit)}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    ${breakdownHTML(r)}
+` : `
+    <div class="flag fail" style="margin-top:16px; padding:16px;">
+      <span class="ic">✕</span>
+      <div>
+        <strong>Pricing Disabled — Non-Compliant Configuration.</strong><br>
+        Prices and costing calculations are hidden because this configuration cannot be made (exceeds AS 1288 structural span limits or maximum glass sheet sizes). Increase mullions, add transoms, or choose a compliant glass product to view pricing.
+      </div>
+    </div>
+`}
+  `;
+
+  $('footnote').innerHTML = `Costing engine ported from the Skyspan GSA workbook and verified to the dollar against 7 reference jobs (single &amp; double glazed, 350 mm–47 m, with and without transoms). Join-on-site segments for this width: <strong>${r.joinSegments}</strong>. AS 1288:2021 Section 6 check is 4-edge support, live-load, AR-bucketed to the nearest table column — wind &amp; combined dead+wind load are separate checks. Painting minutes, paint/powdercoat and "others" costs are job-judgement inputs; defaults applied. Mullion/transom counts are your input, typically per the architect's request.`;
+}
+
+function breakdownHTML(r){
+  const grp = (title, lines, total) => `
+    <div class="bd-group">
+      <div class="gh">${title}</div>
+      ${Object.entries(lines).map(([k,v])=>`<div class="bd-row"><span>${k}</span><span class="bd-amt">${fmtMoney(v)}</span></div>`).join('')}
+      <div class="bd-row gt"><span>Subtotal</span><span class="bd-amt">${fmtMoney(total)}</span></div>
+    </div>`;
+  return `
+    <details class="breakdown">
+      <summary><span class="chev">▸</span> Line-item breakdown</summary>
+      <div class="bd-body">
+        ${grp('Materials', r.matLines, r.matTotal)}
+        ${grp('Fabrication labour', r.labLines, r.labTotal)}
+        ${grp('Packing', r.packLines, r.packTotal)}
+        ${grp('Installation', r.instLines, r.instTotal)}
+      </div>
+    </details>`;
+}
+
+/* ---------- Price editor ---------- */
+function buildPriceEditor(){
+  const ed = $('priceEditor');
+  const row = (label, val, path) => `<div class="pe-row"><label>${label}</label><input type="number" step="any" value="${val}" data-path="${path}"></div>`;
+  ed.innerHTML = `
+    <div class="pe-section">
+      <h3>Labour rates ($/min)</h3>
+      ${row('Fabrication', PRICES.labour.fab, 'labour.fab')}
+      ${row('Installation', PRICES.labour.install, 'labour.install')}
+    </div>
+    <div class="pe-section">
+      <h3>Glass products ($/m²)</h3>
+      ${activeGlassList().map((g,i)=>row(g.name, g.rate, `__glass.${i}.rate`)).join('')}
+    </div>
+    <div class="pe-section">
+      <h3>Subframe ($/piece — SG / DG)</h3>
+      ${PRICES.subframe.map((s,i)=>`
+        <div class="pe-row"><label>${s.name} — SG</label><input type="number" step="any" value="${s.sg}" data-path="subframe.${i}.sg"></div>
+        <div class="pe-row"><label>${s.name} — DG</label><input type="number" step="any" value="${s.dg}" data-path="subframe.${i}.dg"></div>`).join('')}
+    </div>
+    <div class="pe-section">
+      <h3>Glazing suite ($/piece)</h3>
+      ${row('Single glaze side', PRICES.suite.sideSG, 'suite.sideSG')}
+      ${row('Double glaze side', PRICES.suite.sideDG, 'suite.sideDG')}
+      ${row('Single glaze mullion', PRICES.suite.mullSG, 'suite.mullSG')}
+      ${row('Double glaze mullion', PRICES.suite.mullDG, 'suite.mullDG')}
+    </div>
+    <div class="pe-section">
+      <h3>Materials</h3>
+      ${row('Double-sided tape (per roll)', PRICES.materials.tape, 'materials.tape')}
+      ${row('Glazing rubber (per roll)', PRICES.materials.rubber, 'materials.rubber')}
+      ${row('Angle 40×40×3', PRICES.materials.angle, 'materials.angle')}
+      ${row('Rivet (each)', PRICES.materials.rivet, 'materials.rivet')}
+      ${row('Silicone (each)', PRICES.materials.silicone, 'materials.silicone')}
+      ${row('Cleat (each)', PRICES.materials.cleat, 'materials.cleat')}
+      ${row('Zincalume ($/m²)', PRICES.materials.zinc, 'materials.zinc')}
+    </div>
+    <div class="pe-section">
+      <h3>Fixed / job-judgement</h3>
+      ${row('Painting minutes — DG', PRICES.fixed.paintDG, 'fixed.paintDG')}
+      ${row('Painting minutes — SG', PRICES.fixed.paintSG, 'fixed.paintSG')}
+      ${row('Paint / powdercoat ($)', PRICES.fixed.paintCost, 'fixed.paintCost')}
+      ${row('Others ($)', PRICES.fixed.others, 'fixed.others')}
+      ${row('Packaging ($)', PRICES.fixed.packaging, 'fixed.packaging')}
+      ${row('Packing labour (min)', PRICES.fixed.packLabourMin, 'fixed.packLabourMin')}
+      ${row('RHS stock length (mm)', PRICES.fixed.stockLen, 'fixed.stockLen')}
+    </div>
+    <div class="pe-actions">
+      <button class="btn primary" id="peSave">Save prices</button>
+      <button class="btn" id="peReset">Reset to defaults</button>
+    </div>
+  `;
+  $('peSave').onclick = () => {
+    ed.querySelectorAll('input[data-path]').forEach(inp=>{
+      const raw = inp.dataset.path;
+      const val = parseFloat(inp.value)||0;
+      if(raw.startsWith('__glass.')){
+        // glass lives inside the resolved list, not at a fixed path
+        const i = parseInt(raw.split('.')[1]);
+        const list = activeGlassList();
+        if(list[i]) list[i].rate = val;
+        return;
+      }
+      const path = raw.split('.');
+      let o = PRICES;
+      for(let i=0;i<path.length-1;i++) o = o[path[i]];
+      o[path[path.length-1]] = val;
+    });
+    saveLocalOverride(PRICES);
+    PRICE_SOURCE = 'personal override';
+    populateSelects();
+    render();
+    $('peSave').textContent = 'Saved ✓';
+    setTimeout(()=>$('peSave').textContent='Save prices', 1500);
+  };
+  $('peReset').onclick = async () => {
+    if(confirm('Discard your personal price changes and reload the shared company price list?')){
+      clearLocalOverride();
+      PRICES = JSON.parse(JSON.stringify(DEFAULTS));
+      PRICE_SOURCE = 'built-in';
+      await initPrices();
+      populateSelects(); buildPriceEditor(); render();
+    }
+  };
+}
+
+$('peToggle').onclick = () => {
+  const ed = $('priceEditor');
+  const open = ed.classList.toggle('hidden') === false;
+  $('peToggle').textContent = open ? 'Edit prices ▾' : 'Edit prices ▸';
+  if(open) buildPriceEditor();
+};
+
+const printBtn = $('printBtn');
+if (printBtn) {
+  printBtn.addEventListener('click', (e) => {
+    if (e) e.preventDefault();
+    const bd = document.querySelector('#results details.breakdown');
+    const wasOpen = bd ? bd.open : false;
+    if (bd) bd.open = true;
+    try {
+      window.print();
+    } catch (err) {
+      console.warn('Print failed:', err);
+    }
+    if (bd && !wasOpen) setTimeout(() => { bd.open = false; }, 100);
+  });
+}
+
+// plan row typed -> recalc actual;  actual row typed -> recalc plan
+['planW','planL'].forEach(id => $(id).addEventListener('input', syncFromPlan));
+['ow','ol'].forEach(id => $(id).addEventListener('input', syncFromActual));
+// pitch changed -> recompute whichever row is the derived one
+$('pitchDeg').addEventListener('input', () => {
+  updatePitchNote();
+  if(lastEdited === 'plan') syncFromPlan(); else syncFromActual();
+});
+
+// switching single/double reshapes both the glass list and the frame options
+$('glazing').addEventListener('change', () => { populateGlassSelect(); render(); });
+// sub- vs mainframe changes which frame options are offered
+$('hasMainframe').addEventListener('change', render);
+
+['mullions','transoms','glazing','subframe','glass','thermalCap','jobRef',
+ 'instGlaze2Min','instGlaze2Qty','join2Min','join2Qty','makeupMin','makeupQty','packagingOverride'].forEach(id=>{
+  const el=$(id); if(el){ el.addEventListener('input', render); el.addEventListener('change', render); }
+});
+
+(async function init(){
+  await initPrices();
+  populateSelects();
+  updatePitchNote();
+  syncFromActual();      // seeds the plan-view row from the default actual size
+  render();
+  const hint = document.getElementById('priceSourceHint');
+  if(hint){
+    if(PRICE_SOURCE === 'personal override'){
+      hint.innerHTML = 'You have a <strong>personal price override</strong> active in this browser (it overrides the shared list, only for you). Use "Reset to shared list" below to clear it.';
+    } else if(PRICE_SOURCE === 'shared'){
+      hint.innerHTML = 'Prices loaded from the <strong>shared company list</strong> (Power Automate injected). Editing here creates a personal override in your browser only. To change prices for everyone, update <code>Skyspan_Master_Pricing.xlsx</code> in SharePoint.';
+    } else if(PRICE_SOURCE.startsWith('cached')){
+      hint.innerHTML = `Using <strong>cached SharePoint prices</strong> — loaded from this browser's local cache ${PRICE_SOURCE.replace('cached','').trim()}. These are the real master prices from the last time you opened the calculator via SharePoint. Safe to use for PDF. To refresh, open via SharePoint again.`;
+    } else {
+      hint.innerHTML = 'Using <strong>built-in defaults</strong> — the shared price list wasn\'t found and no cache exists. Open the calculator via SharePoint at least once to cache the live prices locally.';
+    }
+  }
+})();
+</script>
+</body>
+</html>

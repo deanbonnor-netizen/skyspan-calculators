@@ -1,0 +1,266 @@
+{
+  "products": [
+    {
+      "code": "GSA",
+      "name": "Glass Skylight Architectural (custom flat glass roof)",
+      "glassList": "STANDARD",
+      "engine": "GSA",
+      "notes": "Custom fabricated roof — mullions/transoms, live calculator"
+    },
+    {
+      "code": "GXL",
+      "name": "Glass Skylight XL (unit skylight)",
+      "glassList": "STANDARD",
+      "engine": "TBD",
+      "notes": "Calculator engine to be built — shares STANDARD glass"
+    },
+    {
+      "code": "GSLHB",
+      "name": "Glass Skylight Low-profile Hip/Box",
+      "glassList": "STANDARD",
+      "engine": "TBD",
+      "notes": "Calculator engine to be built — shares STANDARD glass"
+    },
+    {
+      "code": "GCXL",
+      "name": "Glass Skylight Commercial XL",
+      "glassList": "GCXL",
+      "engine": "TBD",
+      "notes": "Own glass list — calculator engine to be built"
+    },
+    {
+      "code": "TGF",
+      "name": "Tailor-made Glass Feature",
+      "glassList": "PROJECT",
+      "engine": "TBD",
+      "notes": "Glass quoted per job; estimator enters rate in the calculator"
+    }
+  ],
+  "glassLists": {
+    "STANDARD": [
+      {
+        "name": "6.38mm Cl Ann Lam + 12 Argon + 6 Tgh Mono Low E",
+        "rate": 198,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 0,
+        "maxA": 3300,
+        "maxB": 2440
+      },
+      {
+        "name": "12.38mm Cl Ann Lam + 12 Argon + 6 Tgh Low E",
+        "rate": 248,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 12.38,
+        "lite2": 6,
+        "total": 0,
+        "maxA": 3660,
+        "maxB": 2000
+      },
+      {
+        "name": "11.52mm HS Lam Low E + 12 Argon + 8 Tgh Mono",
+        "rate": 475,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 11.52,
+        "lite2": 8,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 4500
+      },
+      {
+        "name": "13.52mm HS Lam Low E + 12 Argon + 10 Tgh Mono",
+        "rate": 600,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 10,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 3300
+      },
+      {
+        "name": "13.52mm HS Lam Low E + 12 Argon + 13.52 HS Lam",
+        "rate": 650,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 13.52,
+        "total": 0,
+        "maxA": 5000,
+        "maxB": 2000
+      },
+      {
+        "name": "13.52mm HS Lam Low E + 12 Argon + 13.52 HS Lam (B)",
+        "rate": 674,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 13.52,
+        "total": 0,
+        "maxA": 4500,
+        "maxB": 2500
+      },
+      {
+        "name": "17.52mm HS Lam Low E + 16 Argon + 13.52 HS Lam",
+        "rate": 737,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 17.52,
+        "lite2": 13.52,
+        "total": 0,
+        "maxA": 2000,
+        "maxB": 2200
+      },
+      {
+        "name": "12.38mm Clear Annealed Laminate",
+        "rate": 105,
+        "glazing": "SG",
+        "type": "lam_annealed",
+        "thk": 12.38,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 3660,
+        "maxB": 3660
+      },
+      {
+        "name": "11.52mm HS Laminate Low E",
+        "rate": 253,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 11.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 2500
+      },
+      {
+        "name": "13.52mm HS Laminate Low E (Std <2440x3660)",
+        "rate": 281,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 2200,
+        "maxB": 4500
+      },
+      {
+        "name": "13.52mm HS Laminate Low E (Oversize)",
+        "rate": 350,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 3660,
+        "maxB": 2000
+      },
+      {
+        "name": "17.52mm HS Laminate Low E (Oversize)",
+        "rate": 396,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 17.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 5000,
+        "maxB": 2200
+      },
+      {
+        "name": "21.52mm HS Laminate Low E (Oversize)",
+        "rate": 1356,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 21.52,
+        "lite2": 0,
+        "total": 0,
+        "maxA": 2500,
+        "maxB": 5000
+      }
+    ]
+  },
+  "labour": {
+    "fab": 1.6,
+    "install": 1.9
+  },
+  "materials": {
+    "tape": 45,
+    "rubber": 90,
+    "angle": 50,
+    "rivet": 0.1,
+    "silicone": 7,
+    "cleat": 100,
+    "zinc": 40
+  },
+  "suite": {
+    "sideSG": 80,
+    "sideDG": 108,
+    "mullSG": 73,
+    "mullDG": 101
+  },
+  "subframe": [
+    {
+      "id": "plant",
+      "name": "Plant-on adapters — no subframe",
+      "sg": 0,
+      "dg": 0,
+      "sect": 0,
+      "frameType": "Subframe",
+      "maxSpanSG": null,
+      "maxSpanDG": null
+    },
+    {
+      "id": "al50x25",
+      "name": "50x25x3 Aluminium RHS",
+      "sg": 85,
+      "dg": 85,
+      "sect": 25,
+      "frameType": "Subframe",
+      "maxSpanSG": 1800,
+      "maxSpanDG": 1500
+    },
+    {
+      "id": "al50x50",
+      "name": "50x50x3 Aluminium RHS",
+      "sg": 115,
+      "dg": 115,
+      "sect": 50,
+      "frameType": "Subframe",
+      "maxSpanSG": 2400,
+      "maxSpanDG": 2100
+    },
+    {
+      "id": "al50x100",
+      "name": "50x100x3 Aluminium RHS",
+      "sg": 150,
+      "dg": 150,
+      "sect": 50,
+      "frameType": "Subframe",
+      "maxSpanSG": 3600,
+      "maxSpanDG": 3200
+    },
+    {
+      "id": "st50x100",
+      "name": "50x100x3 Steel RHS",
+      "sg": 250,
+      "dg": 300,
+      "sect": 50,
+      "frameType": "Mainframe",
+      "maxSpanSG": 5000,
+      "maxSpanDG": 4500
+    }
+  ],
+  "fixed": {
+    "paintDG": 120,
+    "paintSG": 240,
+    "paintCost": 750,
+    "others": 250,
+    "packaging": 250,
+    "packLabourMin": 60,
+    "stockLen": 6500
+  }
+}
