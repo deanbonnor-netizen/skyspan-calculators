@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GSA Glass Roof Calculator — Skyspan</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --ink: #1a2b33;
@@ -482,7 +483,11 @@
       <div class="panel" style="margin-top:20px;">
         <h2 style="display:flex; justify-content:space-between; align-items:center;">
           <span>Price list</span>
-          <button class="settings-toggle" id="peToggle">Edit prices ▸</button>
+          <div>
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload(event)">
+            <button class="settings-toggle" onclick="document.getElementById('excelFileInput').click()" style="background:var(--sky); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:600; cursor:pointer; margin-right:6px;">📊 Load Excel Sheet</button>
+            <button class="settings-toggle" id="peToggle">Edit prices ▸</button>
+          </div>
         </h2>
         <div class="hint" id="priceSourceHint">Prices come from the shared company list. Editing here creates a <strong>personal override</strong> in your browser only — it won't change the master. To update prices for everyone, edit the <code>Skyspan_Master_Pricing.xlsx</code> file in SharePoint.</div>
         <div class="price-editor hidden" id="priceEditor"></div>
@@ -1190,6 +1195,131 @@ function loadPriceCache(){
     if(s) return { raw: JSON.parse(s), ts: ts || null };
   } catch(e){}
   return null;
+}
+
+function parseExcelWorkbook(wb) {
+  const result = { products: [], glassLists: {}, labour: {}, materials: {}, suite: {}, subframe: [], fixed: {} };
+  if (wb.SheetNames[0]) {
+    const data1 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    data1.forEach(row => {
+      if (row['Code']) {
+        result.products.push({
+          code: String(row['Code']), name: String(row['Name'] || ''),
+          glassList: String(row['Glass List'] || 'STANDARD'),
+          engine: String(row['Engine'] || 'GSA'), notes: String(row['Notes'] || '')
+        });
+      }
+    });
+  }
+  const glassSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('glass') || n === 'Sheet3') || wb.SheetNames[2];
+  if (glassSheetName) {
+    const data3 = XLSX.utils.sheet_to_json(wb.Sheets[glassSheetName]);
+    data3.forEach(row => {
+      const listName = String(row['List Name'] || 'STANDARD');
+      const productName = row['Glass product (as shown in calculator)'] || row['Glass product'] || row['Glass'];
+      if (productName && row['Rate $/m²'] != null) {
+        if (!result.glassLists[listName]) result.glassLists[listName] = [];
+        result.glassLists[listName].push({
+          name: String(productName), rate: parseFloat(row['Rate $/m²']) || 0,
+          glazing: String(row['Glazing'] || 'DG').toUpperCase(),
+          type: String(row['AS1288 type'] || 'lam_annealed'),
+          thk: parseFloat(row['Lite 1 lam']) || 6.38,
+          lite2: parseFloat(row['Lite 2 mm']) || 0,
+          total: parseFloat(row['Total glass mm']) || 0,
+          maxA: parseFloat(row['Max size A mm']) || 2000,
+          maxB: parseFloat(row['Max size B mm']) || 4500
+        });
+      }
+    });
+  }
+  const labSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('labour') || n === 'Sheet4') || wb.SheetNames[3];
+  if (labSheetName) {
+    const rows4 = XLSX.utils.sheet_to_json(wb.Sheets[labSheetName], { header: 1 });
+    rows4.forEach(r => {
+      if (r && r.length >= 2) {
+        const key = String(r[0] || '').toLowerCase();
+        const val = parseFloat(r[1]);
+        if (!isNaN(val)) {
+          if (key.includes('fab')) result.labour.fab = val;
+          else if (key.includes('install')) result.labour.install = val;
+          else if (key.includes('tape')) result.materials.tape = val;
+          else if (key.includes('rubber')) result.materials.rubber = val;
+          else if (key.includes('angle')) result.materials.angle = val;
+          else if (key.includes('rivet')) result.materials.rivet = val;
+          else if (key.includes('silicone')) result.materials.silicone = val;
+          else if (key.includes('cleat')) result.materials.cleat = val;
+          else if (key.includes('zinc')) result.materials.zinc = val;
+          else if (key.includes('sidesg')) result.suite.sideSG = val;
+          else if (key.includes('sidedg')) result.suite.sideDG = val;
+          else if (key.includes('mullsg')) result.suite.mullSG = val;
+          else if (key.includes('mulldg')) result.suite.mullDG = val;
+        }
+      }
+    });
+  }
+  const subSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('subframe') || n === 'Sheet5') || wb.SheetNames[4];
+  if (subSheetName) {
+    const data5 = XLSX.utils.sheet_to_json(wb.Sheets[subSheetName]);
+    data5.forEach(row => {
+      const opt = row['Subframe option'] || row['Name'] || row['Option'];
+      if (opt) {
+        result.subframe.push({
+          id: String(row['ID'] || opt.toLowerCase().replace(/[^a-z0-9]/g, '')),
+          name: String(opt), sg: parseFloat(row['SG rate']) || 0,
+          dg: parseFloat(row['DG rate']) || 0, sect: parseFloat(row['Section depth']) || 0,
+          frameType: String(row['Type'] || (opt.toLowerCase().includes('steel') ? 'Mainframe' : 'Subframe')),
+          maxSpanSG: row['SG max span'] ? parseFloat(row['SG max span']) : null,
+          maxSpanDG: row['DG max span'] ? parseFloat(row['DG max span']) : null
+        });
+      }
+    });
+  }
+  const fixSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('fixed') || n === 'Sheet6') || wb.SheetNames[5];
+  if (fixSheetName) {
+    const rows6 = XLSX.utils.sheet_to_json(wb.Sheets[fixSheetName], { header: 1 });
+    rows6.forEach(r => {
+      if (r && r.length >= 2) {
+        const key = String(r[0] || '').toLowerCase();
+        const val = parseFloat(r[1]);
+        if (!isNaN(val)) {
+          if (key.includes('paintdg')) result.fixed.paintDG = val;
+          else if (key.includes('paintsg')) result.fixed.paintSG = val;
+          else if (key.includes('paintcost')) result.fixed.paintCost = val;
+          else if (key.includes('others')) result.fixed.others = val;
+          else if (key.includes('packaging')) result.fixed.packaging = val;
+          else if (key.includes('packlabour')) result.fixed.packLabourMin = val;
+          else if (key.includes('stocklen')) result.fixed.stockLen = val;
+        }
+      }
+    });
+  }
+  return result;
+}
+
+function handleExcelUpload(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type: 'array'});
+      const parsed = parseExcelWorkbook(wb);
+      if(parsed && (parsed.glassLists || parsed.products)){
+        PRICES = normalisePrices(parsed);
+        PRICE_SOURCE = 'Excel: ' + file.name;
+        savePriceCache(parsed);
+        populateSelects();
+        render();
+        const el = $('priceSourceHint');
+        if(el) el.innerHTML = `Prices loaded live from Excel file <strong>${file.name}</strong>.`;
+        alert('Successfully loaded master pricing from ' + file.name + '! All rates and glass limits updated live.');
+      }
+    } catch(err){
+      alert('Could not parse Excel file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 const GITHUB_PRICE_URL = 'https://raw.githubusercontent.com/deanbonnor-netizen/skyspan-calculators/main/netlify/prices.json';
