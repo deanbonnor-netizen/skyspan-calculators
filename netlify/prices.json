@@ -40,7 +40,7 @@
     "STANDARD": [
       {
         "name": "6.38mm Cl Ann Lam + 12 Argon + 6 Tgh Mono Low E",
-        "rate": 250,
+        "rate": 193,
         "glazing": "DG",
         "type": "lam_annealed",
         "thk": 6.38,
