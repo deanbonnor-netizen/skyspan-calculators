@@ -1197,27 +1197,31 @@ async function initPrices(){
   if(typeof LIVE_PRICES_RAW !== 'undefined' && LIVE_PRICES_RAW && LIVE_PRICES_RAW.glass){
     PRICES = normalisePrices(LIVE_PRICES_RAW);
     PRICE_SOURCE = 'shared';
-    savePriceCache(LIVE_PRICES_RAW);   // ← keep a local copy for offline use
+    savePriceCache(LIVE_PRICES_RAW);
     return;
   }
 
-  // 2. Try the localStorage cache (covers locally-opened copies for PDF printing)
-  const cached = loadPriceCache();
-  if(cached && cached.raw){
-    PRICES = normalisePrices(cached.raw);
-    const fmtDate = cached.ts
-      ? new Date(cached.ts).toLocaleString('en-AU', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})
-      : 'unknown time';
-    PRICE_SOURCE = `cached (${fmtDate})`;
-    return;
-  }
+  // 2. Try fetching fresh prices.json from web server with cache buster
+  try {
+    const res = await fetch('prices.json?v=' + Date.now());
+    if(res.ok){
+      const data = await res.json();
+      if(data && (data.glass || data.glassLists)){
+        PRICES = normalisePrices(data);
+        PRICE_SOURCE = 'live web';
+        savePriceCache(data);
+        return;
+      }
+    }
+  } catch(e){}
 
-  // 3. a personal override, if the user saved one, wins for THIS browser only
+  // 3. Check personal override if user saved one in this browser
   const ov = loadLocalOverride();
-  if(ov){ PRICES = ov; PRICE_SOURCE = 'personal override'; }
+  if(ov){ PRICES = ov; PRICE_SOURCE = 'personal override'; return; }
 
-  // 4. Absolute fallback — built-in DEFAULTS (prices may be out of date)
-  // PRICES is already set to DEFAULTS at declaration above
+  // 4. Fallback to DEFAULTS
+  PRICES = normalisePrices(DEFAULTS);
+  PRICE_SOURCE = 'defaults';
 }
 
 /* ============================================================
