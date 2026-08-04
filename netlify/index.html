@@ -1256,6 +1256,8 @@ function loadPriceCache(){
   return null;
 }
 
+const GITHUB_PRICE_URL = 'https://raw.githubusercontent.com/deanbonnor-netizen/skyspan-calculators/main/netlify/prices.json';
+
 async function initPrices(){
   // 1. Try fetching prices.json from the same host (Netlify / any web server)
   if(window.location.protocol !== 'file:'){

@@ -1192,8 +1192,10 @@ function loadPriceCache(){
   return null;
 }
 
+const GITHUB_PRICE_URL = 'https://raw.githubusercontent.com/deanbonnor-netizen/skyspan-calculators/main/netlify/prices.json';
+
 async function initPrices(){
-  // 1. Use prices injected by Power Automate if available (no fetch/CORS needed)
+  // 1. Use prices injected by Power Automate if available
   if(typeof LIVE_PRICES_RAW !== 'undefined' && LIVE_PRICES_RAW && LIVE_PRICES_RAW.glass){
     PRICES = normalisePrices(LIVE_PRICES_RAW);
     PRICE_SOURCE = 'shared';
@@ -1201,14 +1203,14 @@ async function initPrices(){
     return;
   }
 
-  // 2. Try fetching fresh prices.json from web server with cache buster
+  // 2. Try fetching live prices directly from GitHub raw file (0 Netlify build minutes)
   try {
-    const res = await fetch('prices.json?v=' + Date.now());
+    const res = await fetch(GITHUB_PRICE_URL + '?v=' + Date.now());
     if(res.ok){
       const data = await res.json();
       if(data && (data.glass || data.glassLists)){
         PRICES = normalisePrices(data);
-        PRICE_SOURCE = 'live web';
+        PRICE_SOURCE = 'live web (github)';
         savePriceCache(data);
         return;
       }
