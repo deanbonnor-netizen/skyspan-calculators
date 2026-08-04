@@ -484,8 +484,9 @@
         <h2 style="display:flex; justify-content:space-between; align-items:center;">
           <span>Price list</span>
           <div>
+            <button class="settings-toggle" onclick="promptGoogleSheetUrl()" style="background:var(--teal); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:600; cursor:pointer; margin-right:6px;">🔗 Live Google Sheet</button>
             <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload(event)">
-            <button class="settings-toggle" onclick="document.getElementById('excelFileInput').click()" style="background:var(--sky); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:600; cursor:pointer; margin-right:6px;">📊 Load Excel Sheet</button>
+            <button class="settings-toggle" onclick="document.getElementById('excelFileInput').click()" style="background:var(--sky); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:600; cursor:pointer; margin-right:6px;">📊 Load Excel</button>
             <button class="settings-toggle" id="peToggle">Edit prices ▸</button>
           </div>
         </h2>
@@ -1324,8 +1325,74 @@ function handleExcelUpload(event){
 
 const GITHUB_PRICE_URL = 'https://raw.githubusercontent.com/deanbonnor-netizen/skyspan-calculators/main/netlify/prices.json';
 
+function parseGoogleSheetCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const rows = lines.map(line => {
+    const row = [];
+    let insideQuote = false, entry = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') insideQuote = !insideQuote;
+      else if (c === ',' && !insideQuote) { row.push(entry.trim()); entry = ''; }
+      else entry += c;
+    }
+    row.push(entry.trim());
+    return row;
+  });
+  if (rows.length < 2) return null;
+  const result = { glassLists: { STANDARD: [] } };
+  // Find header index for Rate, Glass, Max size A, Max size B
+  const headers = rows[0].map(h => h.toLowerCase());
+  const idxGlass = headers.findIndex(h => h.includes('glass'));
+  const idxRate = headers.findIndex(h => h.includes('rate') || h.includes('$'));
+  const idxGlazing = headers.findIndex(h => h.includes('glazing'));
+  const idxType = headers.findIndex(h => h.includes('as1288') || h.includes('type'));
+  const idxThk = headers.findIndex(h => h.includes('lite 1') || h.includes('thk'));
+  const idxLite2 = headers.findIndex(h => h.includes('lite 2'));
+  const idxMaxA = headers.findIndex(h => h.includes('max size a') || h.includes('maxa'));
+  const idxMaxB = headers.findIndex(h => h.includes('max size b') || h.includes('maxb'));
+
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const name = r[idxGlass >= 0 ? idxGlass : 1];
+    const rate = parseFloat(r[idxRate >= 0 ? idxRate : 2]);
+    if (name && !isNaN(rate)) {
+      result.glassLists.STANDARD.push({
+        name: name,
+        rate: rate,
+        glazing: (r[idxGlazing] || 'DG').toUpperCase(),
+        type: r[idxType] || 'lam_annealed',
+        thk: parseFloat(r[idxThk]) || 6.38,
+        lite2: parseFloat(r[idxLite2]) || 0,
+        total: (parseFloat(r[idxThk])||6.38) + (parseFloat(r[idxLite2])||0),
+        maxA: parseFloat(r[idxMaxA]) || 2000,
+        maxB: parseFloat(r[idxMaxB]) || 4500
+      });
+    }
+  }
+  return result.glassLists.STANDARD.length ? result : null;
+}
+
 async function initPrices(){
-  // 1. Use prices injected by Power Automate if available
+  // 1. Try fetching from configured Google Sheet URL if set
+  const sheetUrl = localStorage.getItem('skyspan_google_sheet_url');
+  if(sheetUrl){
+    try {
+      const res = await fetch(sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
+      if(res.ok){
+        const text = await res.text();
+        const parsed = parseGoogleSheetCSV(text);
+        if(parsed && parsed.glassLists){
+          PRICES = normalisePrices(parsed);
+          PRICE_SOURCE = 'Live Google Sheet';
+          savePriceCache(parsed);
+          return;
+        }
+      }
+    } catch(e){}
+  }
+
+  // 2. Use prices injected by Power Automate if available
   if(typeof LIVE_PRICES_RAW !== 'undefined' && LIVE_PRICES_RAW && LIVE_PRICES_RAW.glass){
     PRICES = normalisePrices(LIVE_PRICES_RAW);
     PRICE_SOURCE = 'shared';
@@ -1333,7 +1400,7 @@ async function initPrices(){
     return;
   }
 
-  // 2. Try fetching live prices directly from GitHub raw file (0 Netlify build minutes)
+  // 3. Try fetching live prices directly from GitHub raw file (0 Netlify build minutes)
   try {
     const res = await fetch(GITHUB_PRICE_URL + '?v=' + Date.now());
     if(res.ok){
@@ -1347,13 +1414,27 @@ async function initPrices(){
     }
   } catch(e){}
 
-  // 3. Check personal override if user saved one in this browser
-  const ov = loadLocalOverride();
-  if(ov){ PRICES = ov; PRICE_SOURCE = 'personal override'; return; }
-
   // 4. Fallback to DEFAULTS
   PRICES = normalisePrices(DEFAULTS);
   PRICE_SOURCE = 'defaults';
+}
+
+function promptGoogleSheetUrl(){
+  const current = localStorage.getItem('skyspan_google_sheet_url') || '';
+  const url = prompt('Paste your Google Sheet Published CSV URL (File -> Share -> Publish to web -> CSV):', current);
+  if(url !== null){
+    if(url.trim() === ''){
+      localStorage.removeItem('skyspan_google_sheet_url');
+      alert('Removed Google Sheet link.');
+    } else {
+      let finalUrl = url.trim();
+      if(finalUrl.includes('/pubhtml')) finalUrl = finalUrl.replace('/pubhtml', '/pub?output=csv');
+      if(finalUrl.includes('/edit')) finalUrl = finalUrl.replace(/\/edit.*$/, '/export?format=csv');
+      localStorage.setItem('skyspan_google_sheet_url', finalUrl);
+      alert('Google Sheet URL saved! Reloading prices...');
+    }
+    initPrices().then(() => { populateSelects(); render(); });
+  }
 }
 
 /* ============================================================
