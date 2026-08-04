@@ -253,37 +253,54 @@
     background: var(--sky-soft); border: 1px solid var(--line);
   }
 
-  /* ---- print / PDF layout ---- */
+  /* ---- print / PDF layout (Single Page A4) ---- */
   .print-only { display: none; }
   
   @media print {
-    @page { size: A4; margin: 14mm; }
-    body { background: #fff; font-size: 11px; }
-    .wrap { max-width: none; padding: 0; }
-    .header-actions, .panel:nth-child(1) > h2 .settings-toggle, #priceEditor,
-    .top .header-actions, .footnote .no-print { display: none !important; }
-    /* hide the whole left input column and price-list panel on print */
-    .grid { display: block; }
-    .grid > div:first-child { display: none !important; }
-    .grid > .panel#results { border: none; padding: 0; }
-    details.breakdown { border: none; }
-    details.breakdown > summary { display: none; }
-    details.breakdown .bd-body { padding: 0; }
-    .print-only { display: block; }
+    @page { size: A4 portrait; margin: 6mm 10mm; }
+    html, body { background: #fff !important; color: #1a2b33 !important; font-size: 9.5pt !important; line-height: 1.25 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    
+    /* Hide top nav, tab bar, inputs, settings, footnotes, and huge breakdowns */
+    header.top, .calc-mode-bar, .header-actions, .settings-toggle, #priceEditor,
+    .footnote, .hint, .fix-btn, .grid > div:first-child, details.breakdown { display: none !important; }
+    
+    .grid { display: block !important; }
+    .grid > .panel#results { border: none !important; padding: 0 !important; box-shadow: none !important; background: transparent !important; }
+    
+    .print-only { display: block !important; }
     .print-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 12px;
+      display: flex !important; justify-content: space-between !important; align-items: flex-end !important;
+      border-bottom: 2px solid #0a7ea4 !important; padding-bottom: 4px !important; margin-bottom: 6px !important;
     }
-    .print-header .ph-title { font-size: 16px; font-weight: 700; }
-    .print-header .ph-sub { font-size: 10px; color: var(--ink-soft); }
-    .print-header .ph-meta { text-align: right; font-size: 10px; color: var(--ink-soft); }
-    .print-spec { margin-bottom: 12px; }
-    .print-spec table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
-    .print-spec td { padding: 3px 8px 3px 0; vertical-align: top; }
-    .print-spec td.k { color: var(--ink-faint); width: 130px; }
-    .print-spec td.v { font-weight: 600; }
-    .schematic { break-inside: avoid; }
-    .margins, .metrics, .breakdown { break-inside: avoid; }
+    .print-header .ph-title { font-size: 13pt !important; font-weight: 700 !important; color: #0a7ea4 !important; }
+    .print-header .ph-sub { font-size: 8pt !important; color: #4a5d66 !important; }
+    .print-header .ph-meta { text-align: right !important; font-size: 8.5pt !important; color: #1a2b33 !important; }
+    
+    .print-spec { margin-bottom: 6px !important; background: #f6f8f9 !important; padding: 4px 8px !important; border-radius: 5px !important; border: 1px solid #dde6ea !important; }
+    .print-spec table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5pt !important; }
+    .print-spec td { padding: 2px 4px !important; vertical-align: top !important; }
+    .print-spec td.k { color: #4a5d66 !important; width: 110px !important; font-weight: 500 !important; }
+    .print-spec td.v { font-weight: 700 !important; color: #1a2b33 !important; }
+    
+    h2 { font-size: 10.5pt !important; margin: 4px 0 !important; }
+    .flag { padding: 4px 8px !important; margin: 4px 0 !important; font-size: 8pt !important; border-radius: 4px !important; }
+    
+    .schematic { text-align: center !important; margin: 4px 0 !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+    .schematic svg { max-height: 110px !important; width: auto !important; }
+    
+    .metrics { display: flex !important; justify-content: space-around !important; background: #f6f8f9 !important; border: 1px solid #dde6ea !important; padding: 4px !important; border-radius: 5px !important; margin: 4px 0 !important; }
+    .metric .k { font-size: 7pt !important; color: #4a5d66 !important; text-transform: uppercase !important; }
+    .metric .v { font-size: 9.5pt !important; font-weight: 700 !important; }
+    
+    .price-line { display: flex !important; justify-content: space-between !important; padding: 3px 0 !important; border-bottom: 1px solid #eef3f5 !important; font-size: 8.5pt !important; }
+    .cost-total { display: flex !important; justify-content: space-between !important; padding: 6px 0 2px !important; border-top: 2px solid #1a2b33 !important; font-size: 10.5pt !important; font-weight: 700 !important; margin-top: 2px !important; }
+    
+    .margins { margin-top: 6px !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+    .margins table { width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important; }
+    .margins th, .margins td { padding: 2px 6px !important; border-bottom: 1px solid #dde6ea !important; }
+    .margins tr.highlight { background: #e3f1f6 !important; font-weight: 700 !important; }
+    
     input, select { border: none; padding: 0; font-weight: 600; -webkit-appearance: none; appearance: none; }
   }
 </style>
