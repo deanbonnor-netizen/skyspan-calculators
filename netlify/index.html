@@ -1387,7 +1387,7 @@ function handleExcelUpload(event){
   reader.readAsArrayBuffer(file);
 }
 
-const GITHUB_PRICE_URL = 'https://raw.githubusercontent.com/deanbonnor-netizen/skyspan-calculators/main/netlify/prices.json';
+const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSm1Ggkrz4yyLmvnzfN6FihQ7Huy3VFj_5EdSZgcFDtL747UU4lHH95wkK6HZFVjw/pub?gid=93236153&single=true&output=csv';
 
 function parseGoogleSheetCSV(text) {
   const lines = text.trim().split(/\r?\n/);
