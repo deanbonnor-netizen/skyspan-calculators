@@ -2263,6 +2263,10 @@ function render(){
   const planWv = Math.round(parseFloat($('planW').value)||0);
   const planLv = Math.round(parseFloat($('planL').value)||0);
   const docTitle = isGXLMode ? `Skylight (${r.variant}) — Job Costing Record` : 'GSA Glass Roof — Job Costing Record';
+  const glassThkTotal = glass.total || (glass.thk + (glass.lite2 || 0));
+  const singlePanelWeightKg = Math.round((r.panelW / 1000) * (r.panelH / 1000) * glassThkTotal * 2.5 * 10) / 10;
+  const totalGlassWeightKg = Math.round(singlePanelWeightKg * r.qty);
+
   const printHeader = `
     <div class="print-only">
       <div class="print-header">
@@ -2295,7 +2299,11 @@ function render(){
           </tr>
           <tr>
             <td class="k">${wantedFrameType()}</td><td class="v">${subframe.name}</td>
+            <td class="k">Glass weight</td><td class="v">${totalGlassWeightKg} kg total (${singlePanelWeightKg} kg/panel)</td>
+          </tr>
+          <tr>
             <td class="k">Checks</td><td class="v">${!sizeOk ? 'EXCEEDS MAX GLASS SIZE — review' : comp.noData ? 'AS 1288 not checked' : comp.ok ? 'AS 1288 compliant' : 'AS 1288 FAIL — review'}</td>
+            <td class="k"></td><td class="v"></td>
           </tr>
         </table>
       </div>
@@ -2310,7 +2318,9 @@ function render(){
     <div class="metrics">
       <div class="metric"><div class="k">Clear panel span</div><div class="v">${fmtMM(clearW)} × ${fmtMM(clearL)}</div></div>
       <div class="metric"><div class="k">Glass cut size</div><div class="v">${fmtMM(r.panelW)} × ${fmtMM(r.panelH)}</div></div>
-      ${r.glassSQMTotal ? `<div class="metric"><div class="k">Glass SQM</div><div class="v">${r.glassSQMTotal.toFixed(4)} m²</div></div>` : ''}
+      ${r.glassSQMTotal ? `<div class="metric"><div class="k">Glass SQM</div><div class="v">${r.glassSQMTotal.toFixed(2)} m²</div></div>` : ''}
+      <div class="metric"><div class="k">Panel Weight</div><div class="v">${singlePanelWeightKg} kg</div></div>
+      <div class="metric"><div class="k">Total Weight</div><div class="v">${totalGlassWeightKg} kg</div></div>
       <div class="metric"><div class="k">Panels</div><div class="v">${r.qty}</div></div>
     </div>
 
