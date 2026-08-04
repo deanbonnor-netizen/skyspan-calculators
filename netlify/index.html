@@ -482,14 +482,15 @@
         <div class="field-grid" style="margin-top:14px;">
           <div class="field">
             <label>Is there a main frame?</label>
-            <select id="hasMainframe">
-              <option value="yes" selected>Yes — building has its own frame</option>
-              <option value="no">No — Skyspan supplies the structure</option>
+            <select id="hasMainframe" onchange="render()">
+              <option value="yes_mullions" selected>Yes — building has frame including mullions</option>
+              <option value="yes_nomullions">Yes — building has frame, but NO structure for mullions</option>
+              <option value="no">No — Skyspan supplies full structure</option>
             </select>
           </div>
           <div class="field">
             <label id="frameLabel">Subframe</label>
-            <select id="subframe"></select>
+            <select id="subframe" onchange="render()"></select>
           </div>
           <div class="field full">
             <span class="hint" id="frameHint"></span>
@@ -1772,7 +1773,8 @@ function renderGlassOptions(W, L, trans, pitch, selectedIdx){
    is heavier, so its limit is lower.
    ============================================================ */
 function wantedFrameType(){
-  return $('hasMainframe').value === 'yes' ? 'Subframe' : 'Mainframe';
+  const val = $('hasMainframe') ? $('hasMainframe').value : 'yes_mullions';
+  return (val === 'yes_mullions' || val === 'yes_nomullions') ? 'Subframe' : 'Mainframe';
 }
 
 function frameMaxSpan(f, dg){
@@ -1796,9 +1798,35 @@ function frameCandidates(mullionSpan, dg){
 
 function populateFrameSelect(mullionSpan, dg){
   const sel = $('subframe');
-  const cands = frameCandidates(mullionSpan, dg);
+  const mfMode = $('hasMainframe') ? $('hasMainframe').value : 'yes_mullions';
   const prev = sel.value;
   const prevName = (PRICES.subframe && PRICES.subframe[prev]) ? PRICES.subframe[prev].name : null;
+
+  if (mfMode === 'yes_mullions') {
+    // Building has frame including mullions
+    // Offer ONLY: 1) 50x25x3 Aluminium RHS (al50x25) [DEFAULT], 2) Plant-on adapters — no subframe (plant)
+    const allowed = (PRICES.subframe || []).filter(f => f.id === 'al50x25' || f.id === 'plant');
+    
+    sel.innerHTML = allowed.map(f => {
+      const i = PRICES.subframe.indexOf(f);
+      return `<option value="${i}">${f.name}</option>`;
+    }).join('');
+
+    const prevIsAllowed = allowed.find(f => f.name === prevName);
+    if(prevIsAllowed){
+      sel.value = String(PRICES.subframe.indexOf(prevIsAllowed));
+    } else {
+      const defaultAl50 = allowed.find(f => f.id === 'al50x25') || allowed[0];
+      if(defaultAl50) sel.value = String(PRICES.subframe.indexOf(defaultAl50));
+    }
+
+    $('frameLabel').textContent = 'Subframe';
+    $('frameHint').textContent = 'Building provides mainframe and mullion structure. Default subframe is 50x25x3 Aluminium RHS.';
+    return true;
+  }
+
+  // Switch to max mullion span calculation for yes_nomullions OR no
+  const cands = frameCandidates(mullionSpan, dg);
 
   sel.innerHTML = cands.map(({f, max, ok}) => {
     const i = PRICES.subframe.indexOf(f);
