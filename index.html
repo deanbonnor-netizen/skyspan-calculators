@@ -1616,14 +1616,21 @@ function parseGoogleSheetCSV(text) {
     const name = r[idxGlass >= 0 ? idxGlass : 1];
     const rate = parseFloat(r[idxRate >= 0 ? idxRate : 2]);
     if (name && !isNaN(rate)) {
+      const pGlazing = (r[idxGlazing] || 'DG').toUpperCase();
+      const pLite2 = parseFloat(r[idxLite2]) || 0;
+      let pThk = parseFloat(r[idxThk]);
+      if (isNaN(pThk) || pThk <= 0) {
+        const mName = name.match(/(\d+(?:\.\d+)?)\s*mm/i);
+        pThk = mName ? parseFloat(mName[1]) : 6.38;
+      }
       result.glassLists.STANDARD.push({
         name: name,
         rate: rate,
-        glazing: (r[idxGlazing] || 'DG').toUpperCase(),
+        glazing: pGlazing,
         type: r[idxType] || 'lam_annealed',
-        thk: parseFloat(r[idxThk]) || 6.38,
-        lite2: parseFloat(r[idxLite2]) || 0,
-        total: (parseFloat(r[idxThk])||6.38) + (parseFloat(r[idxLite2])||0),
+        thk: pThk,
+        lite2: pLite2,
+        total: pThk + pLite2,
         maxA: parseFloat(r[idxMaxA]) || 2000,
         maxB: parseFloat(r[idxMaxB]) || 4500
       });
@@ -2363,7 +2370,9 @@ function render(){
   }
   renderGlassOptions(W, L, trans, pitch, glassAll.indexOf(glass));
 
-  $('glassHint').textContent = `AS 1288 check uses the ${glass.type==='lam_annealed'?'laminated annealed':'laminated heat-strengthened'} inner lite at ${glass.thk} mm.`;
+  const isSGPane = (glass.glazing || '').toUpperCase() === 'SG' || (Number(glass.lite2) === 0);
+  const paneDesc = isSGPane ? 'single laminated glass pane' : 'inner lite';
+  $('glassHint').textContent = `AS 1288 check uses the ${glass.type==='lam_annealed'?'laminated annealed':'laminated heat-strengthened'} ${paneDesc} at ${glass.thk} mm.`;
 
   if(!W || !L){ res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width, length, and mullion counts to price the job.</span></div>'; return; }
 
