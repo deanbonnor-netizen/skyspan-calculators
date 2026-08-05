@@ -2027,8 +2027,8 @@ function renderGlassOptions(W, L, trans, pitch, selectedIdx){
     return { g, res, idx: all.indexOf(g) };
   }).sort((a,b) => {
     if(a.res.ok !== b.res.ok) return a.res.ok ? -1 : 1;
-    if(a.res.ok) return a.res.mullions - b.res.mullions;
-    return 0;
+    if((a.g.rate || 0) !== (b.g.rate || 0)) return (a.g.rate || 0) - (b.g.rate || 0);
+    return (a.res.mullions || 0) - (b.res.mullions || 0);
   });
 
   // preserve open/closed state across re-renders
