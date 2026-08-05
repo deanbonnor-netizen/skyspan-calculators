@@ -1799,14 +1799,13 @@ function populateGlassSelect(){
   const gl = $('glass');
   const all = activeGlassList();
   const avail = availableGlass().slice().sort((a, b) => (Number(a.rate) || 0) - (Number(b.rate) || 0));
-  const prevIdx = parseInt(gl.value);
-  const prevGlass = isFinite(prevIdx) ? all[prevIdx] : null;
+  const prevVal = gl.value;
+  const prevGlass = avail.find(g => g.name === prevVal) || (all.length ? (isFinite(parseInt(prevVal)) ? all[parseInt(prevVal)] : null) : null);
 
   const isGXL = (calcMode === 'gxl' || calcMode === 'gxlm');
   const isThermal = isGXL && $('thermalCap') && ($('thermalCap').value === 'on');
 
   gl.innerHTML = avail.map(g => {
-    const idx = all.indexOf(g);
     let tag = '';
     const nameUpper = (g.name || '').toUpperCase();
     if (nameUpper.includes('THERMALLY BROKEN') || nameUpper.includes('SOFT COAT')) {
@@ -1817,14 +1816,14 @@ function populateGlassSelect(){
       tag = isThermal ? ' [Thermally Broken]' : ' [Non-Thermal]';
     }
     const suppTxt = g.supplier ? ` — ${g.supplier}` : '';
-    return `<option value="${idx}">${g.name}${tag}${suppTxt} — ${fmtMoney(g.rate)}/m²</option>`;
+    const escName = (g.name || '').replace(/"/g, '&quot;');
+    return `<option value="${escName}">${g.name}${tag}${suppTxt} — ${fmtMoney(g.rate)}/m²</option>`;
   }).join('');
 
-  // keep the current glass if it survives the filter, else take the first
   if(prevGlass && avail.includes(prevGlass)){
-    gl.value = String(all.indexOf(prevGlass));
+    gl.value = prevGlass.name;
   } else if(avail.length){
-    gl.value = String(all.indexOf(avail[0]));
+    gl.value = avail[0].name;
   }
 }
 
@@ -2072,7 +2071,8 @@ function renderGlassOptions(W, L, trans, pitch, selectedIdx){
               : `<span class="${res.reason==='needs transoms' ? 'go-warn' : 'go-none'}">${res.reason}</span>`;
             const panelTxt = res.ok ? `${Math.round(res.clearW)}\u00d7${Math.round(res.clearL)}` : '\u2014';
             const suppTxt = g.supplier || '\u2014';
-            return `<tr class="${sel} ${avail}" data-idx="${idx}" data-mull="${res.ok?res.mullions:''}" title="${res.ok?'Click to use this glass and mullion count':res.detail}">
+            const escName = (g.name || '').replace(/"/g, '&quot;');
+            return `<tr class="${sel} ${avail}" data-name="${escName}" data-mull="${res.ok?res.mullions:''}" title="${res.ok?'Click to use this glass and mullion count':res.detail}">
               <td class="go-name">${g.name}</td>
               <td class="go-supp" style="font-size:12px; color:var(--ink-soft);">${suppTxt}</td>
               <td class="r">$${Math.round(g.rate)}</td>
@@ -2090,8 +2090,8 @@ function renderGlassOptions(W, L, trans, pitch, selectedIdx){
 
   el.querySelectorAll('tbody tr').forEach(tr => {
     tr.addEventListener('click', () => {
-      const idx = tr.dataset.idx, mull = tr.dataset.mull;
-      if(idx !== '') $('glass').value = idx;
+      const gName = tr.dataset.name, mull = tr.dataset.mull;
+      if(gName) $('glass').value = gName;
       if(mull !== '') $('mullions').value = mull;
       render();
     });
@@ -2444,8 +2444,9 @@ function render(){
   const subframe = PRICES.subframe[parseInt($('subframe').value)] || PRICES.subframe[3];
   const res = $('results');
   const glassAll = activeGlassList();
-  const glassIdx = parseInt($('glass').value);
-  const glass = glassAll[glassIdx] || availableGlass()[0] || glassAll[0];
+  const glassVal = $('glass').value;
+  const availG = availableGlass();
+  const glass = availG.find(g => g.name === glassVal) || glassAll.find(g => g.name === glassVal) || (isFinite(parseInt(glassVal)) ? glassAll[parseInt(glassVal)] : null) || availG[0] || glassAll[0];
   if(!glass){
     res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>No glass products available for this selection. Check the Glass Lists tab of the master pricing workbook.</span></div>';
     return;
@@ -2517,7 +2518,7 @@ function render(){
 
   // ---- 2000 mm max panel WIDTH rule (width only — driven by mullion count) ----
   const MAX_PANEL_W = 2000;
-  const panelWidthOk = clearW <= MAX_PANEL_W;
+  const panelWidthOk = isGXLMode ? true : clearW <= MAX_PANEL_W;
   // minimum mullions to bring panel width under 2000 mm
   const minMullW = panelWidthOk ? null : Math.ceil(W / MAX_PANEL_W) - 1;
 
