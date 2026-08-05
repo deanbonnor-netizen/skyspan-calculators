@@ -1720,7 +1720,7 @@ function populateSelects(){
 function populateGlassSelect(){
   const gl = $('glass');
   const all = activeGlassList();
-  const avail = availableGlass();
+  const avail = availableGlass().slice().sort((a, b) => (Number(a.rate) || 0) - (Number(b.rate) || 0));
   const prevIdx = parseInt(gl.value);
   const prevGlass = isFinite(prevIdx) ? all[prevIdx] : null;
 
