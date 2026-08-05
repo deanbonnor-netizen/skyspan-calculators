@@ -1604,6 +1604,7 @@ function parseGoogleSheetCSV(text) {
   const result = { glassLists: { STANDARD: [] } };
   // Find header index for Rate, Glass, Max size A, Max size B
   const headers = rows[0].map(h => h.toLowerCase());
+  const idxListName = headers.findIndex(h => h.includes('list name') || h.includes('list'));
   const idxGlass = headers.findIndex(h => h.includes('glass'));
   const idxSupplier = headers.findIndex(h => h.includes('supplier'));
   const idxRate = headers.findIndex(h => h.includes('rate') || h.includes('$'));
@@ -1616,6 +1617,8 @@ function parseGoogleSheetCSV(text) {
 
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
+    const rawListName = idxListName >= 0 ? r[idxListName] : '';
+    const listName = (rawListName && rawListName.trim()) ? rawListName.trim().toUpperCase() : 'STANDARD';
     const name = r[idxGlass >= 0 ? idxGlass : 1];
     const rate = parseFloat(r[idxRate >= 0 ? idxRate : (idxSupplier === 2 ? 3 : 2)]);
     const supplier = idxSupplier >= 0 ? r[idxSupplier] : '';
@@ -1628,7 +1631,8 @@ function parseGoogleSheetCSV(text) {
         const mName = name.match(/(\d+(?:\.\d+)?)\s*mm/i);
         structThk = mName ? parseFloat(mName[1]) : 6.38;
       }
-      result.glassLists.STANDARD.push({
+      const glassObj = {
+        listName: listName,
         name: name,
         supplier: supplier || '',
         rate: rate,
@@ -1639,7 +1643,15 @@ function parseGoogleSheetCSV(text) {
         total: (pLite1 || structThk) + pLite2,
         maxA: parseFloat(r[idxMaxA]) || 2000,
         maxB: parseFloat(r[idxMaxB]) || 4500
-      });
+      };
+
+      if (!result.glassLists[listName]) result.glassLists[listName] = [];
+      result.glassLists[listName].push(glassObj);
+
+      if (listName !== 'STANDARD') {
+        if (!result.glassLists['STANDARD']) result.glassLists['STANDARD'] = [];
+        result.glassLists['STANDARD'].push(glassObj);
+      }
     }
   }
   return result.glassLists.STANDARD.length ? result : null;
@@ -2740,6 +2752,9 @@ $('pitchDeg').addEventListener('input', () => {
 
 // switching single/double reshapes both the glass list and the frame options
 $('glazing').addEventListener('change', () => { populateGlassSelect(); render(); });
+if ($('thermalCap')) {
+  $('thermalCap').addEventListener('change', () => { populateGlassSelect(); render(); });
+}
 // sub- vs mainframe changes which frame options are offered
 $('hasMainframe').addEventListener('change', render);
 
