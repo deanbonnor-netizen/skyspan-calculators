@@ -2362,6 +2362,7 @@ function setCalcMode(mode){
     if(advPanel)  advPanel.style.display = 'none';
   }
   restoreModeState(mode);  // ← restore incoming tab's sizes
+  populateGlassSelect();
   render();
 }
 
@@ -2385,6 +2386,7 @@ function normalisePrices(d){
 }
 
 function render(){
+  populateGlassSelect();
   const W=parseFloat($('ow').value), L=parseFloat($('ol').value);
   const pitchDeg = clampPitch(parseFloat($('pitchDeg').value));
   const pitch = pitchDeg < 30 ? 'low' : 'high';
