@@ -1971,6 +1971,7 @@ function availableGlass(){
   const want = ($('glazing').value === 'dg') ? 'DG' : 'SG';
   const isGXL = (calcMode === 'gxl' || calcMode === 'gxlm');
   const isThermal = isGXL && $('thermalCap') && ($('thermalCap').value === 'on');
+  const targetList = isThermal ? 'GXL' : 'GXLB';
 
   return activeGlassList().filter(g => {
     const gz = (g.glazing || '').toUpperCase();
@@ -1978,11 +1979,15 @@ function availableGlass(){
     if(!matchesGlazing) return false;
 
     if(isGXL){
-      const nameUpper = (g.name || '').toUpperCase();
-      if(isThermal){
-        if(nameUpper.includes('GXLB') || nameUpper.includes('HARD COAT')) return false;
+      if (g.listName) {
+        if (g.listName.toUpperCase() !== targetList) return false;
       } else {
-        if(nameUpper.includes('(THERMALLY BROKEN)') || nameUpper.includes('SOFT COAT')) return false;
+        const nameUpper = (g.name || '').toUpperCase();
+        if(isThermal){
+          if(nameUpper.includes('GXLB') || nameUpper.includes('HARD COAT')) return false;
+        } else {
+          if(nameUpper.includes('(THERMALLY BROKEN)') || nameUpper.includes('SOFT COAT')) return false;
+        }
       }
     }
     return true;
