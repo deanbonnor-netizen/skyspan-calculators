@@ -381,9 +381,9 @@
           </div>
           <div class="field" id="thermalCapField" style="display:none;">
             <label>Cap Type</label>
-            <select id="thermalCap">
-              <option value="on" selected>Thermal Cap (GXL / GXLM)</option>
-              <option value="off">Non-Thermal Cap (GXLB / GXLBM)</option>
+            <select id="thermalCap" onchange="populateGlassSelect(); render();">
+              <option value="on" selected>Thermal Cap (GXL / GXLM — Thermally Broken)</option>
+              <option value="off">Non-Thermal Cap (GXLB / GXLBM — Non-Thermally Broken)</option>
             </select>
           </div>
           <div class="field full" id="advFlashingToggleRow" style="display:none; margin-top:4px;">
@@ -564,8 +564,179 @@ const DEFAULTS = {
       "notes": "Glass quoted per job; estimator enters rate in the calculator"
     }
   ],
+  "circularGlassMatrix": [
+  {
+    "diam": 500,
+    "glassSize": 550,
+    "nonThermalSG": 82.35,
+    "nonThermalDG": 479.5,
+    "thermalDG": 537.7
+  },
+  {
+    "diam": 600,
+    "glassSize": 650,
+    "nonThermalSG": 82.35,
+    "nonThermalDG": 475.32,
+    "thermalDG": 539.82
+  },
+  {
+    "diam": 700,
+    "glassSize": 750,
+    "nonThermalSG": 96.23,
+    "nonThermalDG": 489.73,
+    "thermalDG": 584.91
+  },
+  {
+    "diam": 800,
+    "glassSize": 850,
+    "nonThermalSG": 111.91,
+    "nonThermalDG": 524.61,
+    "thermalDG": 666.26
+  },
+  {
+    "diam": 900,
+    "glassSize": 950,
+    "nonThermalSG": 129.39,
+    "nonThermalDG": 563.69,
+    "thermalDG": 752.23
+  },
+  {
+    "diam": 1000,
+    "glassSize": 1050,
+    "nonThermalSG": 148.67,
+    "nonThermalDG": 606.97,
+    "thermalDG": 847.44
+  },
+  {
+    "diam": 1100,
+    "glassSize": 1150,
+    "nonThermalSG": 169.75,
+    "nonThermalDG": 654.45,
+    "thermalDG": 956.51
+  },
+  {
+    "diam": 1200,
+    "glassSize": 1250,
+    "nonThermalSG": 192.63,
+    "nonThermalDG": 706.13,
+    "thermalDG": 1070.2
+  },
+  {
+    "diam": 1300,
+    "glassSize": 1350,
+    "nonThermalSG": 498.52,
+    "nonThermalDG": 1252.33,
+    "thermalDG": 1241.99
+  },
+  {
+    "diam": 1400,
+    "glassSize": 1450,
+    "nonThermalSG": 567.11,
+    "nonThermalDG": 1355.93,
+    "thermalDG": 1392.6
+  },
+  {
+    "diam": 1500,
+    "glassSize": 1550,
+    "nonThermalSG": 640.61,
+    "nonThermalDG": 1466.93,
+    "thermalDG": 1548.69
+  },
+  {
+    "diam": 1600,
+    "glassSize": 1650,
+    "nonThermalSG": 719.01,
+    "nonThermalDG": 1585.33,
+    "thermalDG": 1715.72
+  },
+  {
+    "diam": 1700,
+    "glassSize": 1750,
+    "nonThermalSG": 802.31,
+    "nonThermalDG": 1711.13,
+    "thermalDG": 1899.18
+  },
+  {
+    "diam": 1800,
+    "glassSize": 1850,
+    "nonThermalSG": 890.51,
+    "nonThermalDG": 1844.33,
+    "thermalDG": 2088.11
+  },
+  {
+    "diam": 1900,
+    "glassSize": 1950,
+    "nonThermalSG": 983.61,
+    "nonThermalDG": 1984.93,
+    "thermalDG": 2293.46
+  },
+  {
+    "diam": 2000,
+    "glassSize": 2050,
+    "nonThermalSG": 1081.62,
+    "nonThermalDG": 2132.93,
+    "thermalDG": 2504.28
+  },
+  {
+    "diam": 2100,
+    "glassSize": 2150,
+    "nonThermalSG": 1379.41,
+    "nonThermalDG": 2984.59,
+    "thermalDG": 2726.06
+  },
+  {
+    "diam": 2200,
+    "glassSize": 2250,
+    "nonThermalSG": 1504.81,
+    "nonThermalDG": 3211.19,
+    "thermalDG": 2957.01
+  },
+  {
+    "diam": 2300,
+    "glassSize": 2350,
+    "nonThermalSG": 1635.91,
+    "nonThermalDG": 3448.09,
+    "thermalDG": 3205.06
+  },
+  {
+    "diam": 2400,
+    "glassSize": 2450,
+    "nonThermalSG": 2114.86,
+    "nonThermalDG": 4313.55,
+    "thermalDG": 5392.22
+  },
+  {
+    "diam": 2500,
+    "glassSize": 2550,
+    "nonThermalSG": 2285.86,
+    "nonThermalDG": 4622.55,
+    "thermalDG": 5826.76
+  }
+],
   "glassLists": {
     "STANDARD": [
+      {
+        "name": "6mm Tgh Low E + 12 Argon + 6.38mm Ann Lam (GXL THERMALLY BROKEN)",
+        "rate": 666,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 12.38,
+        "maxA": 2000,
+        "maxB": 2000
+      },
+      {
+        "name": "6mm Tgh + 12 Argon + 6.38mm Ann Lam (GXLB Hard Coat Low E)",
+        "rate": 550,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 12.38,
+        "maxA": 2000,
+        "maxB": 2000
+      },
       {
         "name": "6.38mm Cl Ann Lam + 12 Argon + 6 Tgh Mono Low E",
         "rate": 250,
@@ -706,6 +877,76 @@ const DEFAULTS = {
         "thk": 21.52,
         "lite2": 0,
         "total": 21.52,
+        "maxA": 2000,
+        "maxB": 4500
+      }
+    ],
+    "GXL": [
+      {
+        "name": "Double Glazed (Soft Coat Low E) - GXL (THERMALLY BROKEN)",
+        "rate": 666,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 12.38,
+        "maxA": 2000,
+        "maxB": 2000
+      },
+      {
+        "name": "8mm Clear Tgh + 12 Argon + 13.52mm HS Lam Soft Coat Low E",
+        "rate": 702,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 8,
+        "total": 21.52,
+        "maxA": 2000,
+        "maxB": 4500
+      }
+    ],
+    "GXLB": [
+      {
+        "name": "Double Glazed (Hard Coat Low E) - GXLB",
+        "rate": 550,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 12.38,
+        "maxA": 2000,
+        "maxB": 2000
+      },
+      {
+        "name": "6mm Tgh Monolithic Low E + 12 Argon + 6.38mm Ann Lam",
+        "rate": 418,
+        "glazing": "DG",
+        "type": "lam_annealed",
+        "thk": 6.38,
+        "lite2": 6,
+        "total": 12.38,
+        "maxA": 2000,
+        "maxB": 2000
+      },
+      {
+        "name": "8mm Tgh Monolithic + 12 Argon + 13.52mm HS Lam Low E",
+        "rate": 475,
+        "glazing": "DG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 8,
+        "total": 21.52,
+        "maxA": 2000,
+        "maxB": 4500
+      },
+      {
+        "name": "13.52mm HS Laminate Low E",
+        "rate": 245,
+        "glazing": "SG",
+        "type": "lam_hs",
+        "thk": 13.52,
+        "lite2": 0,
+        "total": 13.52,
         "maxA": 2000,
         "maxB": 4500
       }
@@ -1468,7 +1709,6 @@ function populateSelects(){
   populateGlassSelect();
 }
 
-// glass dropdown shows only products matching the chosen single/double glazing
 function populateGlassSelect(){
   const gl = $('glass');
   const all = activeGlassList();
@@ -1476,9 +1716,22 @@ function populateGlassSelect(){
   const prevIdx = parseInt(gl.value);
   const prevGlass = isFinite(prevIdx) ? all[prevIdx] : null;
 
-  gl.innerHTML = avail.map(g =>
-    `<option value="${all.indexOf(g)}">${g.name} — ${fmtMoney(g.rate)}/m²</option>`
-  ).join('');
+  const isGXL = (calcMode === 'gxl' || calcMode === 'gxlm');
+  const isThermal = isGXL && $('thermalCap') && ($('thermalCap').value === 'on');
+
+  gl.innerHTML = avail.map(g => {
+    const idx = all.indexOf(g);
+    let tag = '';
+    const nameUpper = (g.name || '').toUpperCase();
+    if (nameUpper.includes('THERMALLY BROKEN') || nameUpper.includes('SOFT COAT')) {
+      tag = ' [Thermally Broken]';
+    } else if (nameUpper.includes('GXLB') || nameUpper.includes('HARD COAT')) {
+      tag = ' [Non-Thermal / GXLB]';
+    } else if (isGXL) {
+      tag = isThermal ? ' [Thermally Broken]' : ' [Non-Thermal]';
+    }
+    return `<option value="${idx}">${g.name}${tag} — ${fmtMoney(g.rate)}/m²</option>`;
+  }).join('');
 
   // keep the current glass if it survives the filter, else take the first
   if(prevGlass && avail.includes(prevGlass)){
@@ -1589,27 +1842,62 @@ function updatePitchNote(){
    prices.json groups glass by list name; products point at a list.
    (Product selector is a later phase — GSA uses STANDARD.)
    ============================================================ */
-function activeProductCode(){ return 'GSA'; }
-
 function activeGlassList(){
-  const code = activeProductCode();
   let listName = 'STANDARD';
-  if(PRICES.products){
+  const isGXLMode = (calcMode === 'gxl' || calcMode === 'gxlm');
+  
+  if (isGXLMode) {
+    const isThermal = $('thermalCap') && ($('thermalCap').value === 'on');
+    listName = isThermal ? 'GXL' : 'GXLB';
+  } else if (calcMode === 'gsa') {
+    // GSA can use all glass options (STANDARD + GXL + GXLB)
+    const std = (PRICES.glassLists && PRICES.glassLists['STANDARD']) || [];
+    const gxl = (PRICES.glassLists && PRICES.glassLists['GXL']) || [];
+    const gxlb = (PRICES.glassLists && PRICES.glassLists['GXLB']) || [];
+    const combined = [...std, ...gxl, ...gxlb];
+    const seen = new Set();
+    const result = combined.filter(g => {
+      if (!g || !g.name) return false;
+      if (seen.has(g.name)) return false;
+      seen.add(g.name);
+      return true;
+    });
+    if (result.length) return result;
+  } else if (PRICES.products) {
+    const code = activeProductCode();
     const p = PRICES.products.find(x => x.code === code);
-    if(p && p.glassList) listName = p.glassList;
+    if (p && p.glassList) listName = p.glassList;
   }
-  if(PRICES.glassLists && PRICES.glassLists[listName]) return PRICES.glassLists[listName];
-  return PRICES.glass || [];      // fallback for the older flat format
+
+  if (PRICES.glassLists && PRICES.glassLists[listName] && PRICES.glassLists[listName].length) {
+    return PRICES.glassLists[listName];
+  }
+  if (PRICES.glassLists && PRICES.glassLists['STANDARD']) {
+    return PRICES.glassLists['STANDARD'];
+  }
+  return PRICES.glass || [];
 }
 
 // glass filtered to the selected single/double glazing
 function availableGlass(){
   const want = ($('glazing').value === 'dg') ? 'DG' : 'SG';
+  const isGXL = (calcMode === 'gxl' || calcMode === 'gxlm');
+  const isThermal = isGXL && $('thermalCap') && ($('thermalCap').value === 'on');
+
   return activeGlassList().filter(g => {
     const gz = (g.glazing || '').toUpperCase();
-    // if a row has no glazing flag, infer it: a second lite means double
-    if(!gz) return want === (Number(g.lite2) > 0 ? 'DG' : 'SG');
-    return gz === want;
+    const matchesGlazing = gz ? (gz === want) : (want === (Number(g.lite2) > 0 ? 'DG' : 'SG'));
+    if(!matchesGlazing) return false;
+
+    if(isGXL){
+      const nameUpper = (g.name || '').toUpperCase();
+      if(isThermal){
+        if(nameUpper.includes('GXLB') || nameUpper.includes('HARD COAT')) return false;
+      } else {
+        if(nameUpper.includes('(THERMALLY BROKEN)') || nameUpper.includes('SOFT COAT')) return false;
+      }
+    }
+    return true;
   });
 }
 
