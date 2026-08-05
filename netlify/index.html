@@ -1919,6 +1919,8 @@ function activeGlassList(){
     const seen = new Set();
     const result = combined.filter(g => {
       if (!g || !g.name) return false;
+      const nameUpper = (g.name || '').toUpperCase();
+      if (nameUpper.includes('CERAMIC FRIT') || nameUpper.includes('FRIT EDGE') || (g.listName && g.listName === 'GSLHB')) return false;
       if (seen.has(g.name)) return false;
       seen.add(g.name);
       return true;
