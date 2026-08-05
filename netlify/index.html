@@ -1544,7 +1544,9 @@ function parseExcelWorkbook(wb) {
       if (productName && row['Rate $/m²'] != null) {
         if (!result.glassLists[listName]) result.glassLists[listName] = [];
         result.glassLists[listName].push({
-          name: String(productName), rate: parseFloat(row['Rate $/m²']) || 0,
+          name: String(productName),
+          supplier: String(row['Supplier'] || row['Supplier name'] || ''),
+          rate: parseFloat(row['Rate $/m²']) || 0,
           glazing: String(row['Glazing'] || 'DG').toUpperCase(),
           type: String(row['AS1288 type'] || 'lam_annealed'),
           thk: parseFloat(row['Lite 1 lam']) || 6.38,
@@ -1667,6 +1669,7 @@ function parseGoogleSheetCSV(text) {
   // Find header index for Rate, Glass, Max size A, Max size B
   const headers = rows[0].map(h => h.toLowerCase());
   const idxGlass = headers.findIndex(h => h.includes('glass'));
+  const idxSupplier = headers.findIndex(h => h.includes('supplier'));
   const idxRate = headers.findIndex(h => h.includes('rate') || h.includes('$'));
   const idxGlazing = headers.findIndex(h => h.includes('glazing'));
   const idxType = headers.findIndex(h => h.includes('as1288') || h.includes('type'));
@@ -1678,7 +1681,8 @@ function parseGoogleSheetCSV(text) {
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     const name = r[idxGlass >= 0 ? idxGlass : 1];
-    const rate = parseFloat(r[idxRate >= 0 ? idxRate : 2]);
+    const rate = parseFloat(r[idxRate >= 0 ? idxRate : (idxSupplier === 2 ? 3 : 2)]);
+    const supplier = idxSupplier >= 0 ? r[idxSupplier] : '';
     if (name && !isNaN(rate)) {
       const pGlazing = (r[idxGlazing] || 'DG').toUpperCase();
       const pLite1 = parseFloat(r[idxThk]) || 0;
@@ -1690,6 +1694,7 @@ function parseGoogleSheetCSV(text) {
       }
       result.glassLists.STANDARD.push({
         name: name,
+        supplier: supplier || '',
         rate: rate,
         glazing: pGlazing,
         type: r[idxType] || 'lam_annealed',
@@ -1799,7 +1804,8 @@ function populateGlassSelect(){
     } else if (isGXL) {
       tag = isThermal ? ' [Thermally Broken]' : ' [Non-Thermal]';
     }
-    return `<option value="${idx}">${g.name}${tag} — ${fmtMoney(g.rate)}/m²</option>`;
+    const suppTxt = g.supplier ? ` — ${g.supplier}` : '';
+    return `<option value="${idx}">${g.name}${tag}${suppTxt} — ${fmtMoney(g.rate)}/m²</option>`;
   }).join('');
 
   // keep the current glass if it survives the filter, else take the first
@@ -2042,7 +2048,7 @@ function renderGlassOptions(W, L, trans, pitch, selectedIdx){
     <div class="go-body">
       <table>
         <thead><tr>
-          <th>Glass</th><th class="r">$/m²</th><th class="r">Max size</th><th class="r">Min mullions</th><th class="r">Panel</th>
+          <th>Glass</th><th>Supplier</th><th class="r">$/m²</th><th class="r">Max size</th><th class="r">Min mullions</th><th class="r">Panel</th>
         </tr></thead>
         <tbody>
           ${rows.map(({g,res,idx}) => {
@@ -2053,8 +2059,10 @@ function renderGlassOptions(W, L, trans, pitch, selectedIdx){
               ? `<span class="go-mull">${res.mullions}</span>`
               : `<span class="${res.reason==='needs transoms' ? 'go-warn' : 'go-none'}">${res.reason}</span>`;
             const panelTxt = res.ok ? `${Math.round(res.clearW)}\u00d7${Math.round(res.clearL)}` : '\u2014';
+            const suppTxt = g.supplier || '\u2014';
             return `<tr class="${sel} ${avail}" data-idx="${idx}" data-mull="${res.ok?res.mullions:''}" title="${res.ok?'Click to use this glass and mullion count':res.detail}">
               <td class="go-name">${g.name}</td>
+              <td class="go-supp" style="font-size:12px; color:var(--ink-soft);">${suppTxt}</td>
               <td class="r">$${Math.round(g.rate)}</td>
               <td class="r">${maxTxt}</td>
               <td class="r">${mullTxt}</td>
