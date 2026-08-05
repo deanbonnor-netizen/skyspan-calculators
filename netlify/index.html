@@ -2602,16 +2602,16 @@ function render(){
             <td class="k">Live load case</td><td class="v">${pitch==='low' ? '1.1 kN (&lt;30°)' : '0.5 kN (≥30°)'}</td>
           </tr>
           <tr>
-            <td class="k">Glass</td><td class="v">${glass.name}</td>
-            <td class="k">Rate</td><td class="v">${fmtMoney(glass.rate)}/m²</td>
+            <td class="k">Glass product</td><td class="v">${glass.name}</td>
+            <td class="k">Glass supplier</td><td class="v">${glass.supplier || '—'}</td>
           </tr>
           <tr>
+            <td class="k">Glass rate</td><td class="v">${fmtMoney(glass.rate)}/m²</td>
             <td class="k">${wantedFrameType()}</td><td class="v">${subframe.name}</td>
-            <td class="k">Glass weight</td><td class="v">${totalGlassWeightKg} kg total (${singlePanelWeightKg} kg/panel)</td>
           </tr>
           <tr>
-            <td class="k">Checks</td><td class="v">${!sizeOk ? 'EXCEEDS MAX GLASS SIZE — review' : comp.noData ? 'AS 1288 not checked' : comp.ok ? 'AS 1288 compliant' : 'AS 1288 FAIL — review'}</td>
-            <td class="k"></td><td class="v"></td>
+            <td class="k">Glass weight</td><td class="v">${totalGlassWeightKg} kg total (${singlePanelWeightKg} kg/panel)</td>
+            <td class="k">Structural check</td><td class="v">${!sizeOk ? 'EXCEEDS MAX GLASS SIZE — review' : comp.noData ? 'AS 1288 not checked' : comp.ok ? 'AS 1288 compliant' : 'AS 1288 FAIL — review'}</td>
           </tr>
         </table>
       </div>
