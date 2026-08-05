@@ -1617,20 +1617,21 @@ function parseGoogleSheetCSV(text) {
     const rate = parseFloat(r[idxRate >= 0 ? idxRate : 2]);
     if (name && !isNaN(rate)) {
       const pGlazing = (r[idxGlazing] || 'DG').toUpperCase();
+      const pLite1 = parseFloat(r[idxThk]) || 0;
       const pLite2 = parseFloat(r[idxLite2]) || 0;
-      let pThk = parseFloat(r[idxThk]);
-      if (isNaN(pThk) || pThk <= 0) {
+      let structThk = Math.max(pLite1, pLite2);
+      if (isNaN(structThk) || structThk <= 0) {
         const mName = name.match(/(\d+(?:\.\d+)?)\s*mm/i);
-        pThk = mName ? parseFloat(mName[1]) : 6.38;
+        structThk = mName ? parseFloat(mName[1]) : 6.38;
       }
       result.glassLists.STANDARD.push({
         name: name,
         rate: rate,
         glazing: pGlazing,
         type: r[idxType] || 'lam_annealed',
-        thk: pThk,
-        lite2: pLite2,
-        total: pThk + pLite2,
+        thk: structThk,
+        lite2: Math.min(pLite1, pLite2),
+        total: (pLite1 || structThk) + pLite2,
         maxA: parseFloat(r[idxMaxA]) || 2000,
         maxB: parseFloat(r[idxMaxB]) || 4500
       });
