@@ -450,6 +450,10 @@
               <option value="off">Non-Thermal Cap (GXLB / GXLBM — Non-Thermally Broken)</option>
             </select>
           </div>
+          <div class="field" id="glassOverrideField">
+            <label>Glass Rate Override <span class="unit">$/m²</span></label>
+            <input type="number" id="glassRateOverride" placeholder="Standard rate" min="0" step="1" oninput="render()" onchange="render()">
+          </div>
           <div class="field full" id="advFlashingToggleRow" style="display:none; margin-top:4px;">
             <button type="button" class="adv-toggle" id="advFlashingToggle" onclick="toggleAdvFlashing()" aria-expanded="false">
               <span id="advFlashingChev">▸</span> Advanced flashing options
@@ -2328,19 +2332,20 @@ let calcMode = 'gsa';
 
 // Per-tab saved state — each tab remembers its own W/L/pitch/mullions independently
 const modeState = {
-  gsa:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'0', transoms:'0' },
-  gxl:  { planW:'', planL:'', ow:'', ol:'', pitch:'3' },
-  gxlm: { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'1' },
+  gsa:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'0', transoms:'0', glassRateOverride:'' },
+  gxl:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', glassRateOverride:'' },
+  gxlm: { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'1', glassRateOverride:'' },
 };
 
 function saveCurrentModeState(){
   const s = modeState[calcMode];
   if(!s) return;
-  s.planW    = $('planW')?.value    ?? '';
-  s.planL    = $('planL')?.value    ?? '';
-  s.ow       = $('ow')?.value       ?? '';
-  s.ol       = $('ol')?.value       ?? '';
-  s.pitch    = $('pitchDeg')?.value ?? '3';
+  s.planW              = $('planW')?.value              ?? '';
+  s.planL              = $('planL')?.value              ?? '';
+  s.ow                 = $('ow')?.value                 ?? '';
+  s.ol                 = $('ol')?.value                 ?? '';
+  s.pitch              = $('pitchDeg')?.value           ?? '3';
+  s.glassRateOverride  = $('glassRateOverride')?.value  ?? '';
   if(s.mullions !== undefined) s.mullions = $('mullions')?.value ?? '0';
   if(s.transoms !== undefined) s.transoms = $('transoms')?.value ?? '0';
 }
@@ -2348,11 +2353,12 @@ function saveCurrentModeState(){
 function restoreModeState(mode){
   const s = modeState[mode];
   if(!s) return;
-  if($('planW'))   $('planW').value   = s.planW;
-  if($('planL'))   $('planL').value   = s.planL;
-  if($('ow'))      $('ow').value      = s.ow;
-  if($('ol'))      $('ol').value      = s.ol;
-  if($('pitchDeg')) $('pitchDeg').value = s.pitch;
+  if($('planW'))             $('planW').value             = s.planW;
+  if($('planL'))             $('planL').value             = s.planL;
+  if($('ow'))                $('ow').value                = s.ow;
+  if($('ol'))                $('ol').value                = s.ol;
+  if($('pitchDeg'))          $('pitchDeg').value          = s.pitch;
+  if($('glassRateOverride')) $('glassRateOverride').value = s.glassRateOverride ?? '';
   if(s.mullions !== undefined && $('mullions')) $('mullions').value = s.mullions;
   if(s.transoms !== undefined && $('transoms')) $('transoms').value = s.transoms;
   // also sync the pitch note display
@@ -2465,12 +2471,17 @@ function render(){
   const glassAll = activeGlassList();
   const glassVal = $('glass').value;
   const availG = availableGlass();
-  const glass = availG.find(g => g.name === glassVal) || glassAll.find(g => g.name === glassVal) || (isFinite(parseInt(glassVal)) ? glassAll[parseInt(glassVal)] : null) || availG[0] || glassAll[0];
-  if(!glass){
+  const rawGlass = availG.find(g => g.name === glassVal) || glassAll.find(g => g.name === glassVal) || (isFinite(parseInt(glassVal)) ? glassAll[parseInt(glassVal)] : null) || availG[0] || glassAll[0];
+  if(!rawGlass){
     res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>No glass products available for this selection. Check the Glass Lists tab of the master pricing workbook.</span></div>';
     return;
   }
-  renderGlassOptions(W, L, trans, pitch, glassAll.indexOf(glass));
+  const overrideRate = parseFloat($('glassRateOverride')?.value);
+  const isRateOverridden = (!isNaN(overrideRate) && overrideRate > 0);
+  const effectiveRate = isRateOverridden ? overrideRate : rawGlass.rate;
+  const glass = Object.assign({}, rawGlass, { rate: effectiveRate, isOverride: isRateOverridden });
+
+  renderGlassOptions(W, L, trans, pitch, glassAll.indexOf(rawGlass));
 
   const isSGPane = (glass.glazing || '').toUpperCase() === 'SG' || (Number(glass.lite2) === 0);
   const paneDesc = isSGPane ? 'single laminated glass pane' : 'inner lite';
@@ -2649,7 +2660,7 @@ function render(){
             <td class="k">Glass supplier</td><td class="v">${glass.supplier || '—'}</td>
           </tr>
           <tr>
-            <td class="k">Glass rate</td><td class="v">${fmtMoney(glass.rate)}/m²</td>
+            <td class="k">Glass rate</td><td class="v">${fmtMoney(glass.rate)}/m²${glass.isOverride ? ' (Override)' : ''}</td>
             <td class="k">${wantedFrameType()}</td><td class="v">${subframe.name}</td>
           </tr>
           <tr>
@@ -2676,7 +2687,7 @@ function render(){
     </div>
 
 ${(sizeOk && skylightOk && panelWidthOk && frameOk && (comp.ok || comp.noData)) ? `
-    <div class="price-line"><span class="lbl">Materials &amp; Extrusions (inc. glazing ${r.glassSQMTotal ? r.glassSQMTotal.toFixed(4) + ' m² @ ' + fmtMoney(glass.rate) + '/m²' : ''})</span><span class="amt">${fmtMoney(r.matTotal)}</span></div>
+    <div class="price-line"><span class="lbl">Materials &amp; Extrusions (inc. glazing ${r.glassSQMTotal ? r.glassSQMTotal.toFixed(4) + ' m² @ ' + fmtMoney(glass.rate) + '/m²' + (glass.isOverride ? ' [Override]' : '') : ''})</span><span class="amt">${fmtMoney(r.matTotal)}</span></div>
     <div class="price-line"><span class="lbl">Assembly Labour</span><span class="amt">${fmtMoney(r.labTotal)}</span></div>
     ${r.packTotal > 0 ? `<div class="price-line"><span class="lbl">Packaging &amp; Paint</span><span class="amt">${fmtMoney(r.packTotal)}</span></div>` : ''}
     <div class="cost-total"><span class="lbl">Total cost</span><span class="amt">${fmtMoney(r.totalCost)}</span></div>
@@ -2850,7 +2861,7 @@ if ($('thermalCap')) {
 // sub- vs mainframe changes which frame options are offered
 $('hasMainframe').addEventListener('change', render);
 
-['mullions','transoms','glazing','subframe','glass','thermalCap','jobRef',
+['mullions','transoms','glazing','subframe','glass','thermalCap','glassRateOverride','jobRef',
  'instGlaze2Min','instGlaze2Qty','join2Min','join2Qty','makeupMin','makeupQty','packagingOverride'].forEach(id=>{
   const el=$(id); if(el){ el.addEventListener('input', render); el.addEventListener('change', render); }
 });
