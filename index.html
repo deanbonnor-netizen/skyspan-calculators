@@ -1282,8 +1282,11 @@ function calculateGXL(P, inp){
   const cols = mull + 1;
   const qty  = cols;
 
-  // Max total skylight size cap: 2400 x 6400 mm
-  const maxSkylightOk = (W <= 2400 && L <= 6400) || (W <= 6400 && L <= 2400);
+  // Max total skylight size cap: 2400 x 6400 mm (std), up to 2600 x 6400 mm (ext warn)
+  const isStdCap = (W <= 2400 && L <= 6400) || (W <= 6400 && L <= 2400);
+  const isExtCap = (W <= 2600 && L <= 6400) || (W <= 6400 && L <= 2600);
+  const skylightSizeStatus = isStdCap ? 'ok' : (isExtCap ? 'warn' : 'fail');
+  const maxSkylightOk = isExtCap;
 
   // Panel cut size
   const panelW = mull === 0 ? (W + 50) : ((W - mull * 50) / cols + 50);
@@ -1400,7 +1403,7 @@ function calculateGXL(P, inp){
     : (thermalCap ? 'GXLM' : 'GXLBM');
 
   return {
-    variant, maxSkylightOk,
+    variant, maxSkylightOk, skylightSizeStatus,
     panelW, panelH, qty, cutQty: qty, panelPrice, glassSQMTotal,
     glazingTotal, matLines, matTotal,
     labLines: { 'Assembly Labour': labTotal }, labTotal,
@@ -2482,8 +2485,13 @@ function render(){
   let sizeErrHTML = '';
   let flag='';
 
+  const skylightWarn = isGXLMode && r.skylightSizeStatus === 'warn';
+  const skylightWarnHTML = skylightWarn
+    ? `<div class="flag warn" style="margin-bottom:12px;"><span class="ic">⚠️</span><div><strong>Skylight exceeds standard 2,400 mm width.</strong> Total skylight dimensions ${Math.round(W)} × ${Math.round(L)} mm are between 2,400 mm and 2,600 mm — custom engineering and heavy fabrication review recommended. Pricing is provided below.</div></div>`
+    : '';
+
   if(!skylightOk){
-    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>Exceeds maximum GXL/GXLM skylight size limit.</strong> Total skylight dimensions ${Math.round(W)} × ${Math.round(L)} mm exceed the 2,400 × 6,400 mm limit for GXL / GXLM.</div></div>`;
+    flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>Exceeds maximum GXL/GXLM skylight size limit.</strong> Total skylight dimensions ${Math.round(W)} × ${Math.round(L)} mm exceed the 2,600 × 6,400 mm limit for GXL / GXLM.</div></div>`;
   } else if(!panelWidthOk){
     const fixBtn = minMullW !== null
       ? `<br><button class="fix-btn" onclick="document.getElementById('mullions').value=${minMullW};render();">Set ${minMullW} mullion${minMullW!==1?'s':''}</button>` : '';
@@ -2523,9 +2531,11 @@ function render(){
     const fix = suggestFix(W, L, rows, pitch, glass.type, glass.thk, cols);
     flag = `<div class="flag fail"><span class="ic">✕</span><div><strong>AS 1288 fail.</strong> Clear span ${Math.round(comp.span)} mm exceeds the ${Math.round(comp.maxSpan)} mm limit at AR ${comp.ar.toFixed(2)} for this glass.${fix!==null?` Minimum ${fix} mullions would pass, or use a stronger glass.`:' No mullion count up to 79 passes — use a stronger glass or add transoms.'}${fix!==null?`<br><button class="fix-btn" onclick="document.getElementById('mullions').value=${fix};render();">Set ${fix} mullions</button>`:''}</div></div>`;
   }
+  if (skylightWarnHTML) flag = skylightWarnHTML + flag;
   $('sizeError').innerHTML = sizeErrHTML;
 
-  const statusPill = !skylightOk ? '<span class="badge-pill fail">✕ Exceeds 2400×6400 limit</span>'
+  const statusPill = !skylightOk ? '<span class="badge-pill fail">✕ Exceeds 2600×6400 limit</span>'
+    : skylightWarn ? '<span class="badge-pill warn">⚠️ 2600mm Max (Custom Review)</span>'
     : !panelWidthOk ? `<span class="badge-pill fail">✕ Panel width ${Math.round(clearW)} mm &gt; 2,000 mm limit</span>`
     : !frameOk ? '<span class="badge-pill fail">✕ No frame spans</span>'
     : !sizeOk ? '<span class="badge-pill fail">✕ Too large to make</span>'
