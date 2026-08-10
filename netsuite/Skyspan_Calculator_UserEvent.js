@@ -15,9 +15,11 @@
 define(['N/url', 'N/runtime'], function(url, runtime) {
 
     function beforeLoad(scriptContext) {
-        // Only run on VIEW and EDIT modes in the browser UI
+        // Only run when viewing or editing records in the browser UI
         if (scriptContext.type === scriptContext.UserEventType.VIEW || scriptContext.type === scriptContext.UserEventType.EDIT) {
-            if (runtime.executionMode !== runtime.ExecutionMode.USER_INTERFACE) return;
+            if (runtime.executionContext && runtime.executionContext !== runtime.ContextType.USER_INTERFACE) {
+                return;
+            }
 
             const form = scriptContext.form;
             const rec = scriptContext.newRecord;
