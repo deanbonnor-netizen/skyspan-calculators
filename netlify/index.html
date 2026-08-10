@@ -2144,8 +2144,12 @@ function frameMaxSpan(f, dg){
 // every frame of the right type, each tagged with whether it can span the roof
 function frameCandidates(mullionSpan, dg){
   const want = wantedFrameType();
+  const mfMode = $('hasMainframe') ? $('hasMainframe').value : 'yes_mullions';
   return (PRICES.subframe || [])
     .filter(f => {
+      if (mfMode === 'yes_nomullions') {
+        return f.id !== 'plant';
+      }
       const t = (f.frameType || 'Both').toLowerCase();
       return t === 'both' || t === want.toLowerCase();
     })
