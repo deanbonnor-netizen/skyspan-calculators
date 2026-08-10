@@ -399,24 +399,24 @@
         </h2>
 
         <div class="size-block">
-          <div class="size-row">
+          <div class="size-row" id="planViewRow">
             <div class="size-label">Plan view <span class="unit">as drawn</span></div>
             <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="planW" min="1" step="10"></div>
             <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="planL" min="1" step="10"></div>
-            <div class="field pitch-cell" rowspan="2">
+            <div class="field pitch-cell" id="pitchCell" rowspan="2">
               <label>Roof pitch <span class="unit">degrees</span></label>
               <input type="number" id="pitchDeg" value="3" min="0" max="85" step="0.5">
             </div>
           </div>
-          <div class="size-arrow"><span id="sizeDir">↕</span></div>
-          <div class="size-row">
-            <div class="size-label">Actual glass <span class="unit">used for costing</span></div>
+          <div class="size-arrow" id="sizeArrow"><span id="sizeDir">↕</span></div>
+          <div class="size-row" id="actualSizeRow">
+            <div class="size-label" id="actualSizeLabel">Actual glass <span class="unit">used for costing</span></div>
             <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="ow" min="1" step="10"></div>
             <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="ol" min="1" step="10"></div>
             <div class="field"><div class="pitch-note" id="pitchNote"></div></div>
           </div>
         </div>
-        <div class="hint" style="margin-top:6px;">Fill in either row — the other calculates from the pitch. Only the <strong>length</strong> (down the fall) is foreshortened in plan view; width is the same in both.</div>
+        <div class="hint" id="sizeHint" style="margin-top:6px;">Fill in either row — the other calculates from the pitch. Only the <strong>length</strong> (down the fall) is foreshortened in plan view; width is the same in both.</div>
 
         <div class="field-grid" style="margin-top:16px;" id="mullTransomRow">
           <div class="field" id="mullionField">
@@ -2428,9 +2428,21 @@ function setCalcMode(mode){
   const advRow         = $('advFlashingToggleRow');
   const advPanel       = $('advFlashingPanel');
 
+  const planRow        = $('planViewRow');
+  const sizeArrow      = $('sizeArrow');
+  const pitchCell      = $('pitchCell');
+  const sizeHint       = $('sizeHint');
+  const actualLbl      = $('actualSizeLabel');
+
   if(mode === 'tgf'){
     if(appTitle)  appTitle.textContent = 'TGF Trafficable Glass Floor Calculator';
     if(appSub)    appSub.textContent   = 'Trafficable glass floor layout, material & labour costing — Skyspan';
+    if(planRow)   planRow.style.display   = 'none';
+    if(sizeArrow) sizeArrow.style.display = 'none';
+    if(pitchCell) pitchCell.style.display = 'none';
+    if(sizeHint)  sizeHint.style.display  = 'none';
+    if(actualLbl) actualLbl.innerHTML     = 'Clear opening <span class="unit">W × L mm</span>';
+    if($('pitchDeg')) $('pitchDeg').value = 0;
     if(thermalCapFld) thermalCapFld.style.display = 'none';
     if(tgfInstFld)    tgfInstFld.style.display    = 'block';
     if(badge)     badge.style.display = 'none';
@@ -2443,52 +2455,56 @@ function setCalcMode(mode){
     if(transomEl)     { transomEl.value = 0; }
     if(advRow)    advRow.style.display  = 'none';
     if(advPanel)  advPanel.style.display = 'none';
-  } else if(mode === 'gxl'){
-    if(appTitle)  appTitle.textContent = 'GXL Skylight Calculator (Single Panel)';
-    if(appSub)    appSub.textContent   = 'Single-panel GXL / GXLB Skylights — Thermal & Non-Thermal Cap — Skyspan';
-    if(thermalCapFld) thermalCapFld.style.display = 'block';
-    if(tgfInstFld)    tgfInstFld.style.display    = 'none';
-    if(badge)     badge.style.display = 'inline-block';
-    // hide subframe + mainframe
-    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
-    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
-    // hide ALL mullion/transom UI
-    if(mullionFld)    mullionFld.style.display    = 'none';
-    if(transomFld)    transomFld.style.display    = 'none';
-    if(mullTransHint) mullTransHint.style.display = 'none';
-    if(mullionEl)     { mullionEl.value = 0; }
-    if(transomEl)     { transomEl.value = 0; }
-    if(advRow)    advRow.style.display  = 'block';
-  } else if(mode === 'gxlm'){
-    if(appTitle)  appTitle.textContent = 'GXLM Modular Skylight Calculator';
-    if(appSub)    appSub.textContent   = 'Multi-panel GXLM / GXLBM Skylights with Mullions — Skyspan';
-    if(thermalCapFld) thermalCapFld.style.display = 'block';
-    if(tgfInstFld)    tgfInstFld.style.display    = 'none';
-    if(badge)     badge.style.display = 'inline-block';
-    // hide subframe + mainframe
-    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
-    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
-    // show MULLIONS only (no transoms on GXL products)
-    if(mullionFld)    mullionFld.style.display    = 'block';
-    if(transomFld)    transomFld.style.display    = 'none';
-    if(mullTransHint) mullTransHint.style.display = 'block';
-    if(transomEl)     { transomEl.value = 0; }
-    if(mullionEl && parseInt(mullionEl.value,10) < 1) mullionEl.value = 1;
-    if(advRow)    advRow.style.display  = 'block';
   } else {
-    // GSA mode
-    if(appTitle)  appTitle.textContent = 'GSA Glass Roof Calculator';
-    if(appSub)    appSub.textContent   = 'Panel layout, AS 1288 compliance & live costing — Skyspan';
-    if(thermalCapFld) thermalCapFld.style.display = 'none';
-    if(tgfInstFld)    tgfInstFld.style.display    = 'none';
-    if(badge)     badge.style.display = 'none';
-    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'block';
-    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'block';
-    if(mullionFld)    mullionFld.style.display    = 'block';
-    if(transomFld)    transomFld.style.display    = 'block';
-    if(mullTransHint) mullTransHint.style.display = 'block';
-    if(advRow)    advRow.style.display  = 'none';
-    if(advPanel)  advPanel.style.display = 'none';
+    if(planRow)   planRow.style.display   = 'flex';
+    if(sizeArrow) sizeArrow.style.display = 'flex';
+    if(pitchCell) pitchCell.style.display = 'block';
+    if(sizeHint)  sizeHint.style.display  = 'block';
+    if(actualLbl) actualLbl.innerHTML     = 'Actual glass <span class="unit">used for costing</span>';
+
+    if(mode === 'gxl'){
+      if(appTitle)  appTitle.textContent = 'GXL Skylight Calculator (Single Panel)';
+      if(appSub)    appSub.textContent   = 'Single-panel GXL / GXLB Skylights — Thermal & Non-Thermal Cap — Skyspan';
+      if(thermalCapFld) thermalCapFld.style.display = 'block';
+      if(tgfInstFld)    tgfInstFld.style.display    = 'none';
+      if(badge)     badge.style.display = 'inline-block';
+      if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
+      if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
+      if(mullionFld)    mullionFld.style.display    = 'none';
+      if(transomFld)    transomFld.style.display    = 'none';
+      if(mullTransHint) mullTransHint.style.display = 'none';
+      if(mullionEl)     { mullionEl.value = 0; }
+      if(transomEl)     { transomEl.value = 0; }
+      if(advRow)    advRow.style.display  = 'block';
+    } else if(mode === 'gxlm'){
+      if(appTitle)  appTitle.textContent = 'GXLM Modular Skylight Calculator';
+      if(appSub)    appSub.textContent   = 'Multi-panel GXLM / GXLBM Skylights with Mullions — Skyspan';
+      if(thermalCapFld) thermalCapFld.style.display = 'block';
+      if(tgfInstFld)    tgfInstFld.style.display    = 'none';
+      if(badge)     badge.style.display = 'inline-block';
+      if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
+      if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
+      if(mullionFld)    mullionFld.style.display    = 'block';
+      if(transomFld)    transomFld.style.display    = 'none';
+      if(mullTransHint) mullTransHint.style.display = 'block';
+      if(transomEl)     { transomEl.value = 0; }
+      if(mullionEl && parseInt(mullionEl.value,10) < 1) mullionEl.value = 1;
+      if(advRow)    advRow.style.display  = 'block';
+    } else {
+      // GSA mode
+      if(appTitle)  appTitle.textContent = 'GSA Glass Roof Calculator';
+      if(appSub)    appSub.textContent   = 'Panel layout, AS 1288 compliance & live costing — Skyspan';
+      if(thermalCapFld) thermalCapFld.style.display = 'none';
+      if(tgfInstFld)    tgfInstFld.style.display    = 'none';
+      if(badge)     badge.style.display = 'none';
+      if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'block';
+      if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'block';
+      if(mullionFld)    mullionFld.style.display    = 'block';
+      if(transomFld)    transomFld.style.display    = 'block';
+      if(mullTransHint) mullTransHint.style.display = 'block';
+      if(advRow)    advRow.style.display  = 'none';
+      if(advPanel)  advPanel.style.display = 'none';
+    }
   }
   restoreModeState(mode);  // ← restore incoming tab's sizes
   populateGlassSelect();
