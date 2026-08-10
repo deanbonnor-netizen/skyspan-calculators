@@ -1729,20 +1729,22 @@ function parseGoogleSheetCSV(text) {
 }
 
 async function initPrices(){
-  // 1. Try fetching prices.json from the same host (Netlify / any web server)
-  if(window.location.protocol !== 'file:'){
+  // 1. Fetch live Google Sheet prices
+  const sheetUrl = localStorage.getItem('skyspan_google_sheet_url') || GOOGLE_SHEET_URL;
+  if(sheetUrl){
     try {
-      const resp = await fetch('./prices.json', { cache: 'no-store' });
-      if(resp.ok){
-        const raw = await resp.json();
-        if(raw && (raw.glass || raw.glassLists)){
-          PRICES = normalisePrices(raw);
-          PRICE_SOURCE = 'shared';
-          savePriceCache(raw);
+      const res = await fetch(sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
+      if(res.ok){
+        const text = await res.text();
+        const parsed = parseGoogleSheetCSV(text);
+        if(parsed && parsed.glassLists && parsed.glassLists.STANDARD && parsed.glassLists.STANDARD.length){
+          PRICES = normalisePrices(parsed);
+          PRICE_SOURCE = 'Live Google Sheet';
+          savePriceCache(parsed);
           return;
         }
       }
-    } catch(e){ console.warn('prices.json fetch failed:', e.message); }
+    } catch(e){}
   }
 
   // 2. Use prices injected by Power Automate if available
@@ -1753,22 +1755,23 @@ async function initPrices(){
     return;
   }
 
-  // 3. Try the localStorage cache (offline fallback)
-  const cached = loadPriceCache();
-  if(cached && cached.raw){
-    PRICES = normalisePrices(cached.raw);
-    const fmtDate = cached.ts
-      ? new Date(cached.ts).toLocaleString('en-AU', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})
-      : 'unknown time';
-    PRICE_SOURCE = `cached (${fmtDate})`;
-    return;
-  }
+  // 3. Try fetching live prices directly from GitHub raw file (0 Netlify build minutes)
+  try {
+    const res = await fetch(GITHUB_PRICE_URL + '?v=' + Date.now());
+    if(res.ok){
+      const data = await res.json();
+      if(data && (data.glass || data.glassLists)){
+        PRICES = normalisePrices(data);
+        PRICE_SOURCE = 'live web (github)';
+        savePriceCache(data);
+        return;
+      }
+    }
+  } catch(e){}
 
-  // 4. Personal override
-  const ov = loadLocalOverride();
-  if(ov){ PRICES = ov; PRICE_SOURCE = 'personal override'; return; }
-
-  // 5. Built-in DEFAULTS (last resort)
+  // 4. Fallback to DEFAULTS
+  PRICES = normalisePrices(DEFAULTS);
+  PRICE_SOURCE = 'defaults';
 }
 
 function promptGoogleSheetUrl(){
