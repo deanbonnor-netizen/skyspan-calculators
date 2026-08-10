@@ -1832,6 +1832,7 @@ function promptGoogleSheetUrl(){
 const $ = id => document.getElementById(id);
 function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-AU'); }
 function fmtMM(n){ return Math.round(n).toLocaleString('en-AU') + ' mm'; }
+function escapeHtml(str){ if(str == null) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
 function populateSelects(){
   // the frame dropdown is rebuilt inside render(), because its options
@@ -2633,7 +2634,7 @@ function calculateTGF(P, inp) {
     glassSizeA, glassSizeB, glassSqm,
     glassRate, glassTotal,
     alFrameRate, alFrameTotal,
-    capRate, capTotal,
+    capLm, capRate, capTotal,
     dynaBoltQty, dynaBoltRate, dynaBoltTotal,
     tapeLm, tapeRate, tapeTotal,
     siliconeQty, siliconeRate, siliconeTotal,
@@ -2659,6 +2660,14 @@ function render(){
   const L=parseFloat($('ol')?.value) || parseFloat($('planL')?.value);
   const res = $('results');
 
+  const extra = {
+    fabRate: $('fabRate')?.value === '' ? null : (parseFloat($('fabRate')?.value)||null),
+    installRate: $('installRate')?.value === '' ? null : (parseFloat($('installRate')?.value)||null),
+    cutCleatsMin: $('cutCleatsMin')?.value === '' ? null : (parseFloat($('cutCleatsMin')?.value)||null),
+    weldCleatsMin: $('weldCleatsMin')?.value === '' ? null : (parseFloat($('weldCleatsMin')?.value)||null),
+    paintMin: $('paintMin')?.value === '' ? null : (parseFloat($('paintMin')?.value)||null)
+  };
+
   if (calcMode === 'tgf') {
     if(!W || !L || isNaN(W) || isNaN(L)){
       res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width and length to price the job.</span></div>';
@@ -2673,14 +2682,6 @@ function render(){
     const glassObj = { name: glassDesc, rate: glassRate, isOverride: !isNaN(overrideRate) && overrideRate > 0, glazing: dg ? 'DG' : 'SG' };
     const instTier = $('tgfInstTier')?.value || 'Small';
     const jobRef = ($('jobRef')?.value || '').trim();
-
-    const extra = {
-      fabRate: $('fabRate')?.value === '' ? null : (parseFloat($('fabRate')?.value)||null),
-      installRate: $('installRate')?.value === '' ? null : (parseFloat($('installRate')?.value)||null),
-      cutCleatsMin: $('cutCleatsMin')?.value === '' ? null : (parseFloat($('cutCleatsMin')?.value)||null),
-      weldCleatsMin: $('weldCleatsMin')?.value === '' ? null : (parseFloat($('weldCleatsMin')?.value)||null),
-      paintMin: $('paintMin')?.value === '' ? null : (parseFloat($('paintMin')?.value)||null)
-    };
 
     if (glassRate <= 0) {
       res.innerHTML = `
