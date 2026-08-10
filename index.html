@@ -2890,26 +2890,26 @@ function generateCustomerPDFContainer(mode, p) {
   const docTitle = isTGF ? 'TGF TRAFFICABLE GLASS FLOOR' : (mode === 'gxlm' ? 'GXLM MODULAR GLASS SKYLIGHT' : (mode === 'gxl' ? 'GXL SINGLE PANEL GLASS SKYLIGHT' : 'GSA GLASS ROOF SKYLIGHT'));
 
   const hasProductPhoto = mode === 'gsa';
-  const heroSectionHTML = hasProductPhoto ? `
-      <div class="cp-hero-section">
-        <div class="cp-section-title">PROJECT SCHEMATIC &amp; ARCHITECTURAL PRODUCT PHOTO</div>
-        <div style="display:flex; gap:12px; align-items:stretch;">
-          <div class="cp-schematic-wrap" style="flex:1.3;">
-            ${heroSchematicHTML}
+  const adBannerHTML = hasProductPhoto ? `
+      <div class="cp-banner-section" style="margin-top:10px; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius:6px; padding:10px 14px; color:#ffffff; display:flex; align-items:center; justify-content:space-between; gap:14px; page-break-inside:avoid; break-inside:avoid;">
+        <div style="width:68px; height:68px; flex-shrink:0; border-radius:5px; overflow:hidden; border:1.5px solid rgba(255,255,255,0.25); background:#fff; display:flex; align-items:center; justify-content:center;">
+          <img src="${GSA_IMAGE_BASE64}" alt="Skyspan GSA Glass Roof" style="width:100%; height:100%; object-fit:cover;">
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+            <span style="font-size:6.5pt; font-weight:700; background:#0284c7; color:#ffffff; padding:1px 5px; border-radius:3px; text-transform:uppercase; letter-spacing:0.8px;">Architectural Series</span>
+            <span style="font-size:7pt; color:#94a3b8; font-weight:500;">Premium Glass Roof Solutions</span>
           </div>
-          <a href="https://skyspan.com.au/collections/architectural-skylights/products/glass-roof-gsa" target="_blank" rel="noopener" style="flex:1; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; text-decoration:none;">
-            <img src="${GSA_IMAGE_BASE64}" style="max-height:135px; width:auto; max-width:100%; border-radius:4px; border:1px solid #cbd5e1; object-fit:cover; margin-bottom:6px;" alt="Skyspan GSA Glass Roof">
-            <div style="font-size:8.5pt; font-weight:700; color:#0284c7; margin-bottom:2px;">GSA Custom Glass Roof Skylight</div>
-            <div style="font-size:7pt; color:#0284c7; font-weight:600;">skyspan.com.au/products/glass-roof-gsa ↗</div>
+          <div style="font-size:10.5pt; font-weight:700; color:#ffffff; letter-spacing:-0.2px; line-height:1.2; margin-bottom:2px;">SKYSPAN GSA GLASS ROOF SKYLIGHTS</div>
+          <div style="font-size:7.5pt; color:#cbd5e1; line-height:1.25;">Custom engineered sloped glass roof systems for commercial &amp; high-end residential applications.</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <a href="https://skyspan.com.au/collections/architectural-skylights/products/glass-roof-gsa" target="_blank" rel="noopener" style="display:inline-block; background:#0284c7; color:#ffffff; font-size:7.5pt; font-weight:700; padding:5px 10px; border-radius:4px; text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; border:1px solid #38bdf8;">
+            Explore Product Page ↗
           </a>
+          <div style="font-size:6.5pt; color:#94a3b8;">www.skyspan.com.au</div>
         </div>
-      </div>` : `
-      <div class="cp-hero-section">
-        <div class="cp-section-title">PROJECT SCHEMATIC &amp; LAYOUT SCHEME</div>
-        <div class="cp-schematic-wrap">
-          ${heroSchematicHTML}
-        </div>
-      </div>`;
+      </div>` : '';
 
   const hasMainframeVal = $('hasMainframe') ? $('hasMainframe').value : 'yes_mullions';
   let notesHTML = '';
@@ -2947,7 +2947,12 @@ function generateCustomerPDFContainer(mode, p) {
         </div>
       </div>
 
-      ${heroSectionHTML}
+      <div class="cp-hero-section">
+        <div class="cp-section-title">PROJECT SCHEMATIC &amp; LAYOUT SCHEME</div>
+        <div class="cp-schematic-wrap">
+          ${heroSchematicHTML}
+        </div>
+      </div>
 
       <div class="cp-spec-section">
         <div class="cp-section-title">TECHNICAL SPECIFICATIONS</div>
@@ -2981,6 +2986,8 @@ function generateCustomerPDFContainer(mode, p) {
       </div>
 
       ${notesHTML}
+
+      ${adBannerHTML}
 
       <div class="cp-footer">
         <div>Skyspan Australia Pty Ltd · 1300 880 708 · sales@skyspan.com.au</div>
