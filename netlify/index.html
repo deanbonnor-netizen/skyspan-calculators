@@ -386,6 +386,7 @@
     <button type="button" class="mode-tab active" id="tabGsa" onclick="setCalcMode('gsa')">GSA Glass Roof Calculator</button>
     <button type="button" class="mode-tab" id="tabGxl" onclick="setCalcMode('gxl')">GXL Skylight (Single Panel)</button>
     <button type="button" class="mode-tab" id="tabGxlm" onclick="setCalcMode('gxlm')">GXLM Modular Skylight (Mullions)</button>
+    <button type="button" class="mode-tab" id="tabTgf" onclick="setCalcMode('tgf')">TGF Glass Floor Calculator</button>
   </div>
 
   <div class="grid">
@@ -448,6 +449,14 @@
             <select id="thermalCap" onchange="populateGlassSelect(); render();">
               <option value="on" selected>Thermal Cap (GXL / GXLM — Thermally Broken)</option>
               <option value="off">Non-Thermal Cap (GXLB / GXLBM — Non-Thermally Broken)</option>
+            </select>
+          </div>
+          <div class="field" id="tgfInstField" style="display:none;">
+            <label>Installation Size Tier</label>
+            <select id="tgfInstTier" onchange="render()">
+              <option value="Small" selected>Small ($500)</option>
+              <option value="Medium">Medium ($600)</option>
+              <option value="Large">Large ($700)</option>
             </select>
           </div>
           <div class="field" id="glassOverrideField">
@@ -1018,6 +1027,23 @@ const DEFAULTS = {
         "maxA": 2000,
         "maxB": 4500
       }
+    ],
+    "TGF": [
+      { "name": "33.04 Custom Heat-Treated Laminate Clear", "rate": 590, "glazing": "SG", "type": "lam_hs", "thk": 33.04, "lite2": 0, "total": 33.04, "maxA": 2250, "maxB": 3250 },
+      { "name": "33.04 Custom Heat-Treated Laminate Non-Slip Watsons Griplite", "rate": 690, "glazing": "SG", "type": "lam_hs", "thk": 33.04, "lite2": 0, "total": 33.04, "maxA": 2250, "maxB": 3250 },
+      { "name": "33.04 Custom Heat-Treated Laminate Non-Slip GTS Ceramlux", "rate": 1090, "glazing": "SG", "type": "lam_hs", "thk": 33.04, "lite2": 0, "total": 33.04, "maxA": 2250, "maxB": 3250 },
+      { "name": "40.56 Custom Heat-Treated Laminate Clear", "rate": 775, "glazing": "SG", "type": "lam_hs", "thk": 40.56, "lite2": 0, "total": 40.56, "maxA": 2250, "maxB": 3250 },
+      { "name": "40.56 Custom Heat-Treated Laminate Non-Slip Watsons Griplite", "rate": 875, "glazing": "SG", "type": "lam_hs", "thk": 40.56, "lite2": 0, "total": 40.56, "maxA": 2250, "maxB": 3250 },
+      { "name": "40.56 Custom Heat-Treated Laminate Non-Slip GTS Ceramlux", "rate": 1275, "glazing": "SG", "type": "lam_hs", "thk": 40.56, "lite2": 0, "total": 40.56, "maxA": 2250, "maxB": 3250 },
+      { "name": "46.56 Custom Heat-Treated Laminate Clear", "rate": 805, "glazing": "SG", "type": "lam_hs", "thk": 46.56, "lite2": 0, "total": 46.56, "maxA": 2250, "maxB": 3250 },
+      { "name": "46.56 Custom Heat-Treated Laminate Non-Slip Watsons Griplite", "rate": 905, "glazing": "SG", "type": "lam_hs", "thk": 46.56, "lite2": 0, "total": 46.56, "maxA": 2250, "maxB": 3250 },
+      { "name": "46.56 Custom Heat-Treated Laminate Non-Slip GTS Ceramlux", "rate": 1305, "glazing": "SG", "type": "lam_hs", "thk": 46.56, "lite2": 0, "total": 46.56, "maxA": 2250, "maxB": 3250 },
+      { "name": "54.56 Custom Heat-Treated Laminate IGU Clear", "rate": 850, "glazing": "DG", "type": "lam_hs", "thk": 54.56, "lite2": 13.52, "total": 66.88, "maxA": 2250, "maxB": 3250 },
+      { "name": "54.56 Custom Heat-Treated Laminate IGU Non-Slip Watsons Griplite", "rate": 950, "glazing": "DG", "type": "lam_hs", "thk": 54.56, "lite2": 13.52, "total": 66.88, "maxA": 2250, "maxB": 3250 },
+      { "name": "54.56 Custom Heat-Treated Laminate IGU Non-Slip GTS Ceramlux", "rate": 1350, "glazing": "DG", "type": "lam_hs", "thk": 54.56, "lite2": 13.52, "total": 66.88, "maxA": 2250, "maxB": 3250 },
+      { "name": "58.56 Custom Heat-Treated Laminate IGU Clear", "rate": 870, "glazing": "DG", "type": "lam_hs", "thk": 58.56, "lite2": 13.52, "total": 70.88, "maxA": 2250, "maxB": 3250 },
+      { "name": "58.56 Custom Heat-Treated Laminate IGU Non-Slip Watsons Griplite", "rate": 970, "glazing": "DG", "type": "lam_hs", "thk": 58.56, "lite2": 13.52, "total": 70.88, "maxA": 2250, "maxB": 3250 },
+      { "name": "58.56 Custom Heat-Treated Laminate IGU Non-Slip GTS Ceramlux", "rate": 1370, "glazing": "DG", "type": "lam_hs", "thk": 58.56, "lite2": 13.52, "total": 70.88, "maxA": 2250, "maxB": 3250 }
     ]
   },
   "labour": {
@@ -1942,7 +1968,9 @@ function activeGlassList(){
   let listName = 'STANDARD';
   const isGXLMode = (calcMode === 'gxl' || calcMode === 'gxlm');
   
-  if (isGXLMode) {
+  if (calcMode === 'tgf') {
+    if (PRICES.glassLists && PRICES.glassLists['TGF']) return PRICES.glassLists['TGF'];
+  } else if (isGXLMode) {
     const isThermal = $('thermalCap') && ($('thermalCap').value === 'on');
     listName = isThermal ? 'GXL' : 'GXLB';
   } else if (calcMode === 'gsa') {
@@ -2375,14 +2403,16 @@ function restoreModeState(mode){
 function setCalcMode(mode){
   saveCurrentModeState();   // ← save outgoing tab's sizes
   calcMode = mode;
-  const tabGsa=$('tabGsa'), tabGxl=$('tabGxl'), tabGxlm=$('tabGxlm');
+  const tabGsa=$('tabGsa'), tabGxl=$('tabGxl'), tabGxlm=$('tabGxlm'), tabTgf=$('tabTgf');
   if(tabGsa)  tabGsa.classList.toggle('active',  mode==='gsa');
   if(tabGxl)  tabGxl.classList.toggle('active',  mode==='gxl');
   if(tabGxlm) tabGxlm.classList.toggle('active', mode==='gxlm');
+  if(tabTgf)  tabTgf.classList.toggle('active',  mode==='tgf');
 
   const appTitle       = $('appTitle');
   const appSub         = $('appSub');
   const thermalCapFld  = $('thermalCapField');
+  const tgfInstFld     = $('tgfInstField');
   const badge          = $('gxlVariantBadge');
   const hasMainframe   = $('hasMainframe');
   const subframeSel    = $('subframe');
@@ -2394,10 +2424,26 @@ function setCalcMode(mode){
   const advRow         = $('advFlashingToggleRow');
   const advPanel       = $('advFlashingPanel');
 
-  if(mode === 'gxl'){
+  if(mode === 'tgf'){
+    if(appTitle)  appTitle.textContent = 'TGF Trafficable Glass Floor Calculator';
+    if(appSub)    appSub.textContent   = 'Trafficable glass floor layout, material & labour costing — Skyspan';
+    if(thermalCapFld) thermalCapFld.style.display = 'none';
+    if(tgfInstFld)    tgfInstFld.style.display    = 'block';
+    if(badge)     badge.style.display = 'none';
+    if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
+    if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'none';
+    if(mullionFld)    mullionFld.style.display    = 'none';
+    if(transomFld)    transomFld.style.display    = 'none';
+    if(mullTransHint) mullTransHint.style.display = 'none';
+    if(mullionEl)     { mullionEl.value = 0; }
+    if(transomEl)     { transomEl.value = 0; }
+    if(advRow)    advRow.style.display  = 'none';
+    if(advPanel)  advPanel.style.display = 'none';
+  } else if(mode === 'gxl'){
     if(appTitle)  appTitle.textContent = 'GXL Skylight Calculator (Single Panel)';
     if(appSub)    appSub.textContent   = 'Single-panel GXL / GXLB Skylights — Thermal & Non-Thermal Cap — Skyspan';
     if(thermalCapFld) thermalCapFld.style.display = 'block';
+    if(tgfInstFld)    tgfInstFld.style.display    = 'none';
     if(badge)     badge.style.display = 'inline-block';
     // hide subframe + mainframe
     if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
@@ -2413,6 +2459,7 @@ function setCalcMode(mode){
     if(appTitle)  appTitle.textContent = 'GXLM Modular Skylight Calculator';
     if(appSub)    appSub.textContent   = 'Multi-panel GXLM / GXLBM Skylights with Mullions — Skyspan';
     if(thermalCapFld) thermalCapFld.style.display = 'block';
+    if(tgfInstFld)    tgfInstFld.style.display    = 'none';
     if(badge)     badge.style.display = 'inline-block';
     // hide subframe + mainframe
     if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'none';
@@ -2429,6 +2476,7 @@ function setCalcMode(mode){
     if(appTitle)  appTitle.textContent = 'GSA Glass Roof Calculator';
     if(appSub)    appSub.textContent   = 'Panel layout, AS 1288 compliance & live costing — Skyspan';
     if(thermalCapFld) thermalCapFld.style.display = 'none';
+    if(tgfInstFld)    tgfInstFld.style.display    = 'none';
     if(badge)     badge.style.display = 'none';
     if(hasMainframe?.closest('.field')) hasMainframe.closest('.field').style.display = 'block';
     if(subframeSel?.closest('.field')) subframeSel.closest('.field').style.display  = 'block';
@@ -2460,6 +2508,100 @@ function normalisePrices(d){
   if(shaped.subframe   && shaped.subframe.length)             merged.subframe   = shaped.subframe;
   if(shaped.glassLists && Object.keys(shaped.glassLists).length) merged.glassLists = shaped.glassLists;
   return merged;
+}
+
+function calculateTGF(P, inp) {
+  const { W, L, glazing, glass, instTier, extra } = inp;
+
+  const frameSideA = W + 100;
+  const frameSideB = L + 100;
+  const frameLm = ((frameSideA * 2) + (frameSideB * 2)) / 1000;
+  const capLm = frameLm;
+
+  const glassSizeA = W + 100;
+  const glassSizeB = L + 100;
+  const glassSqm = (glassSizeA / 1000) * (glassSizeB / 1000);
+
+  const glassRate = glass && glass.rate ? glass.rate : (glazing === 'dg' ? 850 : 590);
+  const glassTotal = glassSqm * glassRate;
+
+  const alFrameRate = 21.50; // 60x60x6mm Aluminium Angle
+  const alFrameTotal = frameLm * alFrameRate;
+
+  const capRate = 15.00; // Stainless Steel Trim Cap
+  const capTotal = capLm * capRate;
+
+  const k23 = Math.ceil(W / 300 + 1);
+  const n23 = Math.ceil(L / 300 + 1);
+  const dynaBoltQty = (k23 + n23) * 2;
+  const dynaBoltRate = 2.50;
+  const dynaBoltTotal = dynaBoltQty * dynaBoltRate;
+
+  const tapeLm = Math.ceil(((frameSideA + frameSideB) * 2) / 1000);
+  const tapeRate = 2.00;
+  const tapeTotal = tapeLm * tapeRate;
+
+  const siliconeQty = tapeLm;
+  const siliconeRate = 21.00;
+  const siliconeTotal = siliconeQty * siliconeRate;
+
+  const materialsTotal = glassTotal + alFrameTotal + capTotal + dynaBoltTotal + tapeTotal + siliconeTotal;
+
+  const fabRate = (extra?.fabRate != null && !isNaN(extra.fabRate) && extra.fabRate !== '') ? parseFloat(extra.fabRate) : (P.labour?.fab || 1.60);
+
+  const cutAlMin = (extra?.cutCleatsMin != null && !isNaN(extra.cutCleatsMin)) ? parseFloat(extra.cutCleatsMin) : 40;
+  const drillHolesMin = 10 * dynaBoltQty;
+  const weldAlMin = (extra?.weldCleatsMin != null && !isNaN(extra.weldCleatsMin)) ? parseFloat(extra.weldCleatsMin) : 60;
+  const linishAlMin = 20;
+  const cutStMin = 30;
+  const foldStMin = 30;
+  const cleanMin = 20;
+  const paintMin = (extra?.paintMin != null && !isNaN(extra.paintMin)) ? parseFloat(extra.paintMin) : 30;
+
+  const totalLabourMin = cutAlMin + drillHolesMin + weldAlMin + linishAlMin + cutStMin + foldStMin + cleanMin + paintMin;
+  const labourTotal = totalLabourMin * fabRate;
+  const manHours = totalLabourMin / 60;
+
+  let instCost = 500;
+  if (instTier === 'Medium') instCost = 600;
+  else if (instTier === 'Large') instCost = 700;
+
+  const totalCost = materialsTotal + labourTotal + instCost;
+
+  const m40Sell = totalCost * 1.6667;
+  const m45Sell = totalCost * 1.8182;
+  const m50Sell = totalCost * 2.0;
+  const m55Sell = totalCost * 2.2222;
+  const m60Sell = totalCost * 2.5;
+  const m65Sell = totalCost * 2.8571;
+
+  const tenderPrice = Math.ceil(m55Sell);
+
+  return {
+    calcMode: 'tgf',
+    W, L, glazing, glass,
+    frameSideA, frameSideB, frameLm,
+    glassSizeA, glassSizeB, glassSqm,
+    glassRate, glassTotal,
+    alFrameRate, alFrameTotal,
+    capRate, capTotal,
+    dynaBoltQty, dynaBoltRate, dynaBoltTotal,
+    tapeLm, tapeRate, tapeTotal,
+    siliconeQty, siliconeRate, siliconeTotal,
+    materialsTotal,
+    fabRate, totalLabourMin, labourTotal, manHours,
+    instTier, instCost,
+    totalCost,
+    margins: [
+      { pct: 40, sell: m40Sell, profit: m40Sell - totalCost },
+      { pct: 45, sell: m45Sell, profit: m45Sell - totalCost },
+      { pct: 50, sell: m50Sell, profit: m50Sell - totalCost },
+      { pct: 55, sell: m55Sell, profit: m55Sell - totalCost },
+      { pct: 60, sell: m60Sell, profit: m60Sell - totalCost },
+      { pct: 65, sell: m65Sell, profit: m65Sell - totalCost }
+    ],
+    tenderPrice
+  };
 }
 
 function render(){
@@ -2495,6 +2637,89 @@ function render(){
   $('glassHint').textContent = `AS 1288 check uses the ${glass.type==='lam_annealed'?'laminated annealed':'laminated heat-strengthened'} ${paneDesc} at ${glass.thk} mm.`;
 
   if(!W || !L){ res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width, length, and mullion counts to price the job.</span></div>'; return; }
+
+  const extra = {
+    fabRate: $('fabRate')?.value === '' ? null : (parseFloat($('fabRate')?.value)||null),
+    installRate: $('installRate')?.value === '' ? null : (parseFloat($('installRate')?.value)||null),
+    cutCleatsMin: $('cutCleatsMin')?.value === '' ? null : (parseFloat($('cutCleatsMin')?.value)||null),
+    weldCleatsMin: $('weldCleatsMin')?.value === '' ? null : (parseFloat($('weldCleatsMin')?.value)||null),
+    paintMin: $('paintMin')?.value === '' ? null : (parseFloat($('paintMin')?.value)||null)
+  };
+
+  if (calcMode === 'tgf') {
+    const instTier = $('tgfInstTier')?.value || 'Small';
+    const r = calculateTGF(PRICES, { W, L, glazing: $('glazing').value, glass, instTier, extra });
+    
+    const jobRef = ($('jobRef')?.value || '').trim();
+    const printHeader = `
+      <div class="print-header">
+        <div class="print-brand">SKYSPAN — TGF TRAFFICABLE GLASS FLOOR CALCULATOR</div>
+        <div class="print-ref">${jobRef ? 'Job ref: <strong>' + escapeHtml(jobRef) + '</strong>' : 'Internal Quote Estimate'} — ${new Date().toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'})}</div>
+        <div class="print-spec">
+          <table>
+            <tr>
+              <td class="k">Clear Opening (W × L)</td><td class="v">${Math.round(W)} × ${Math.round(L)} mm</td>
+              <td class="k">Glazing Type</td><td class="v">${dg ? 'Double Glazed (IGU)' : 'Single Glazed'}</td>
+            </tr>
+            <tr>
+              <td class="k">Glass Size</td><td class="v">${r.glassSizeA} × ${r.glassSizeB} mm (${r.glassSqm.toFixed(2)} m²)</td>
+              <td class="k">Frame Perimeter</td><td class="v">${r.frameLm.toFixed(2)} L/m</td>
+            </tr>
+            <tr>
+              <td class="k">Glass product</td><td class="v">${glass.name}</td>
+              <td class="k">Glass Rate</td><td class="v">${fmtMoney(glass.rate)}/m²${glass.isOverride ? ' (Override)' : ''}</td>
+            </tr>
+            <tr>
+              <td class="k">Installation Tier</td><td class="v">${r.instTier} Tier (${fmtMoney(r.instCost)})</td>
+              <td class="k">Structural Grade</td><td class="v">AS 1170.1 Trafficable Floor Glass</td>
+            </tr>
+          </table>
+        </div>
+      </div>`;
+
+    res.innerHTML = printHeader + `
+      <h2 style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Result</span><span class="badge ok">TGF COMPLIANT</span>
+      </h2>
+      <div class="metrics">
+        <div class="metric"><div class="k">Clear Opening</div><div class="v">${fmtMM(W)} × ${fmtMM(L)}</div></div>
+        <div class="metric"><div class="k">Glass Cut Size</div><div class="v">${r.glassSizeA} × ${r.glassSizeB}</div></div>
+        <div class="metric"><div class="k">Glass SQM</div><div class="v">${r.glassSqm.toFixed(2)} m²</div></div>
+        <div class="metric"><div class="k">Frame Perimeter</div><div class="v">${r.frameLm.toFixed(2)} L/m</div></div>
+        <div class="metric"><div class="k">Dyna Bolts</div><div class="v">${r.dynaBoltQty} qty</div></div>
+        <div class="metric"><div class="k">Man Hours</div><div class="v">${r.manHours.toFixed(1)} hrs</div></div>
+      </div>
+
+      <div class="price-line"><span class="lbl">Materials Cost (Glass, Aluminium Angle, ST/ST Cap, Bolts, Tape, Silicone)</span><span class="amt">${fmtMoney(r.materialsTotal)}</span></div>
+      <div class="price-line"><span class="lbl">Assembly Labour (${r.totalLabourMin} min @ ${fmtMoney(r.fabRate)}/min)</span><span class="amt">${fmtMoney(r.labourTotal)}</span></div>
+      <div class="price-line"><span class="lbl">Installation Allowance (${r.instTier} Tier)</span><span class="amt">${fmtMoney(r.instCost)}</span></div>
+      <div class="cost-total"><span class="lbl">Total Cost</span><span class="amt">${fmtMoney(r.totalCost)}</span></div>
+
+      <div class="margins">
+        <table>
+          <thead><tr><th>Margin</th><th class="r">Sell price</th><th class="r">Profit</th></tr></thead>
+          <tbody>
+            ${r.margins.map(m=>`<tr class="${m.pct===55?'highlight':''}"><td>${m.pct}%</td><td class="r">${fmtMoney(m.sell)}</td><td class="r">${fmtMoney(m.profit)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bd-group" style="margin-top:16px;">
+        <div class="gh">Detailed Materials &amp; Labour Breakdown</div>
+        <div class="bd-row"><span>Glass (${r.glassSizeA}×${r.glassSizeB}mm, ${r.glassSqm.toFixed(2)}m² @ ${fmtMoney(r.glassRate)}/m²)</span><span class="bd-amt">${fmtMoney(r.glassTotal)}</span></div>
+        <div class="bd-row"><span>60x60x6mm Aluminium Angle (${r.frameLm.toFixed(2)} L/m @ ${fmtMoney(r.alFrameRate)}/m)</span><span class="bd-amt">${fmtMoney(r.alFrameTotal)}</span></div>
+        <div class="bd-row"><span>Stainless Steel Trim Cap (${r.capLm.toFixed(2)} L/m @ ${fmtMoney(r.capRate)}/m)</span><span class="bd-amt">${fmtMoney(r.capTotal)}</span></div>
+        <div class="bd-row"><span>Dyna Bolts 8x75mm (${r.dynaBoltQty} qty @ ${fmtMoney(r.dynaBoltRate)})</span><span class="bd-amt">${fmtMoney(r.dynaBoltTotal)}</span></div>
+        <div class="bd-row"><span>Glazing Tape (${r.tapeLm} L/m @ ${fmtMoney(r.tapeRate)})</span><span class="bd-amt">${fmtMoney(r.tapeTotal)}</span></div>
+        <div class="bd-row"><span>Structural Silicone (${r.siliconeQty} tubes @ ${fmtMoney(r.siliconeRate)})</span><span class="bd-amt">${fmtMoney(r.siliconeTotal)}</span></div>
+        <div class="bd-row"><span>Labour (${r.totalLabourMin} min @ ${fmtMoney(r.fabRate)}/min — ${r.manHours.toFixed(1)} hrs)</span><span class="bd-amt">${fmtMoney(r.labourTotal)}</span></div>
+        <div class="bd-row"><span>Installation Allowance (${r.instTier} Tier)</span><span class="bd-amt">${fmtMoney(r.instCost)}</span></div>
+      </div>
+    `;
+
+    $('footnote').innerHTML = `TGF costing engine ported from Skyspan Trafficable Glass Floor Templates (TGF-SG &amp; TGF-DG). Verified against 500×2000 mm single and double glazed reference builds. Builder/Tender Price is calculated at 55% margin: <strong>${fmtMoney(r.tenderPrice)}</strong>.`;
+    return;
+  }
 
   const cols=mull+1, rows=trans+1;
   const clearW = (W - mull * 50) / cols;
