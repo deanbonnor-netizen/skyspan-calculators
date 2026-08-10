@@ -2039,6 +2039,9 @@ function availableGlass(){
    glass envelope no mullion count can rescue it.
    ------------------------------------------------------------ */
 function minMullionsFor(g, W, L, trans, pitch){
+  if (calcMode === 'tgf') {
+    return { ok: true, mullions: 0, clearW: W, clearL: L, panels: 1 };
+  }
   const rows = trans + 1;
   const clearL = L / rows;
   const maxA = (g.maxA == null) ? Infinity : g.maxA; // Max Width
@@ -2370,6 +2373,7 @@ const modeState = {
   gsa:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'0', transoms:'0', glassRateOverride:'' },
   gxl:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', glassRateOverride:'' },
   gxlm: { planW:'', planL:'', ow:'', ol:'', pitch:'3', mullions:'1', glassRateOverride:'' },
+  tgf:  { planW:'', planL:'', ow:'', ol:'', pitch:'3', glassRateOverride:'' }
 };
 
 function saveCurrentModeState(){
@@ -2610,12 +2614,14 @@ function render(){
   const pitchDeg = clampPitch(parseFloat($('pitchDeg').value));
   const pitch = pitchDeg < 30 ? 'low' : 'high';
   const isGXLMode = (calcMode === 'gxl' || calcMode === 'gxlm');
-  const mull = calcMode === 'gxl' ? 0 : (parseInt($('mullions').value)||0);
-  const trans = isGXLMode ? 0 : (parseInt($('transoms').value)||0);
+  const isTGFMode = (calcMode === 'tgf');
+  const mull = (calcMode === 'gxl' || calcMode === 'tgf') ? 0 : (parseInt($('mullions').value)||0);
+  const trans = (isGXLMode || isTGFMode) ? 0 : (parseInt($('transoms').value)||0);
   const dg = $('glazing').value==='dg';
   const mullionSpan = L || 0;
-  const frameOk = isGXLMode ? true : populateFrameSelect(mullionSpan, dg);
-  const subframe = PRICES.subframe[parseInt($('subframe').value)] || PRICES.subframe[3];
+  const frameOk = (isGXLMode || isTGFMode) ? true : populateFrameSelect(mullionSpan, dg);
+  const subframeIdx = parseInt($('subframe')?.value);
+  const subframe = (PRICES.subframe && !isNaN(subframeIdx) && PRICES.subframe[subframeIdx]) ? PRICES.subframe[subframeIdx] : (PRICES.subframe ? PRICES.subframe[0] : { name: '—' });
   const res = $('results');
   const glassAll = activeGlassList();
   const glassVal = $('glass').value;
