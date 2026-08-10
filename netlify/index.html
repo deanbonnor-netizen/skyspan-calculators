@@ -277,6 +277,9 @@
     body.customer-pdf-active #priceEditor,
     body.customer-pdf-active .footnote,
     body.customer-pdf-active .hint,
+    body.customer-pdf-active #results > h2,
+    body.customer-pdf-active #results > .flag,
+    body.customer-pdf-active #results > #sizeError,
     body.customer-pdf-active .fix-btn,
     body.customer-pdf-active .grid > div:first-child,
     body.customer-pdf-active .print-only,
@@ -2864,7 +2867,7 @@ function generateCustomerPDFContainer(mode, p) {
   const isTGF = mode === 'tgf';
   const dg = glazing === 'dg';
   const glazingLabel = dg ? 'Double Glazed (IGU)' : 'Single Glazed';
-  const pitchLabel = isTGF ? '0° (Flat Floor)' : `${pitchDeg}° (${pitch === 'low' ? 'Low Pitch' : 'High Pitch'})`;
+  const pitchLabel = isTGF ? '0°' : `${pitchDeg}°`;
   const liveLoadLabel = isTGF ? 'AS 1170.1 Trafficable Floor Load' : (pitch === 'low' ? '1.1 kN (<30°)' : '0.5 kN (≥30°)');
   const subframeLabel = isTGF ? '60×60×6mm Al Angle & ST/ST Trim Cap' : (subframe?.name || 'Standard Framing');
   
@@ -2876,6 +2879,27 @@ function generateCustomerPDFContainer(mode, p) {
 
   const heroSchematicHTML = isTGF ? buildTGFSchematic(W, L) : buildSchematic(W, L, cols, rows, (W - mull*50)/cols, L/rows);
   const docTitle = isTGF ? 'TGF TRAFFICABLE GLASS FLOOR' : (mode === 'gxlm' ? 'GXLM MODULAR GLASS SKYLIGHT' : (mode === 'gxl' ? 'GXL SINGLE PANEL GLASS SKYLIGHT' : 'GSA GLASS ROOF SKYLIGHT'));
+
+  const hasMainframeVal = $('hasMainframe') ? $('hasMainframe').value : 'yes_mullions';
+  let notesHTML = '';
+  if (isTGF) {
+    notesHTML = `
+      <div class="cp-notes-section">
+        <div class="cp-section-title">ARCHITECTURAL &amp; INSTALLATION NOTES</div>
+        <ul class="cp-notes-list">
+          <li>Glass floor rebate and perimeter structural support angles to be installed per Skyspan engineering details.</li>
+          <li>All supporting hob structures and perimeter flashing details must comply with Australian Building Standards.</li>
+        </ul>
+      </div>`;
+  } else if (hasMainframeVal === 'yes_mullions') {
+    notesHTML = `
+      <div class="cp-notes-section">
+        <div class="cp-section-title">ARCHITECTURAL &amp; INSTALLATION NOTES</div>
+        <ul class="cp-notes-list">
+          <li>The perimeter structural hob and structural beams of some sort is by the builder. We require the perimeter hob to be flashed/ waterproofed by the builder up the side of the hob, so it is flush with the top. We in turn flash down and over the top of the hob.</li>
+        </ul>
+      </div>`;
+  }
 
   return `
     <div class="customer-pdf-container">
@@ -2930,14 +2954,7 @@ function generateCustomerPDFContainer(mode, p) {
         <div class="cp-comp-desc">${compDesc}</div>
       </div>
 
-      <div class="cp-notes-section">
-        <div class="cp-section-title">ARCHITECTURAL &amp; INSTALLATION NOTES</div>
-        <ul class="cp-notes-list">
-          <li>Aluminum welded frame and flashings to suit structural hob supplied and built by others.</li>
-          ${isTGF ? '<li>Glass floor rebate and perimeter structural support angles to be installed per Skyspan engineering details.</li>' : '<li>Skyspan recommends structural hob to be poured with 5° pitch to ensure optimal water run-off and prevent damming.</li>'}
-          <li>All supporting hob structures and perimeter flashing details must comply with Australian Building Standards.</li>
-        </ul>
-      </div>
+      ${notesHTML}
 
       <div class="cp-footer">
         <div>Skyspan Australia Pty Ltd · 1300 880 708 · sales@skyspan.com.au</div>
