@@ -254,7 +254,7 @@
   }
 
   /* ---- print / PDF layout (Single Page A4) ---- */
-  .print-only { display: none; }
+  .print-only, .print-header, .print-spec { display: none; }
   
   @media print {
     @page { size: A4 portrait; margin: 6mm 10mm; }
@@ -1894,6 +1894,33 @@ function buildSchematic(W, L, cols, rows, spanW, spanL){
   return `<svg viewBox="0 0 560 ${oy+dh+20}" xmlns="http://www.w3.org/2000/svg"><defs><marker id="fall-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--fall)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>${s}</svg>`;
 }
 
+function buildTGFSchematic(W, L) {
+  const glassA = W + 100;
+  const glassB = L + 100;
+  const maxW = 440, maxH = 190, scale = Math.min(maxW / glassA, maxH / glassB);
+  const dw = glassA * scale, dh = glassB * scale, ox = (560 - dw) / 2, oy = 32;
+  const cw = W * scale, ch = L * scale, cox = (560 - cw) / 2, coy = oy + (50 * scale);
+
+  let s = `
+    <!-- Outer Al Angle & ST/ST Cap Frame -->
+    <rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" rx="4" fill="none" stroke="var(--ink-faint)" stroke-width="2.5"/>
+    
+    <!-- Glass Cut Size -->
+    <rect x="${ox+2}" y="${oy+2}" width="${dw-4}" height="${dh-4}" rx="3" fill="var(--sky-soft)" stroke="var(--sky)" stroke-width="1.25"/>
+    
+    <!-- Clear Opening Area -->
+    <rect x="${cox}" y="${coy}" width="${cw}" height="${ch}" rx="2" fill="rgba(14, 165, 233, 0.15)" stroke="var(--sky)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    
+    <!-- Dimension Text -->
+    <text x="${560/2}" y="${oy - 10}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)">Clear Opening: ${Math.round(W)} × ${Math.round(L)} mm</text>
+    <text x="${ox + dw / 2}" y="${oy + dh + 16}" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">Glass Cut Size: ${Math.round(glassA)} × ${Math.round(glassB)} mm (+100mm rebate allowance)</text>
+    <text x="${ox - 12}" y="${oy + dh / 2}" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" transform="rotate(-90 ${ox - 12} ${oy + dh / 2})">${Math.round(glassB)} mm</text>
+    <text x="${ox + dw + 14}" y="${oy + dh / 2}" text-anchor="middle" font-size="9.5" fill="var(--sky)" transform="rotate(90 ${ox + dw + 14} ${oy + dh / 2})">Clear L: ${Math.round(L)} mm</text>
+  `;
+
+  return `<svg viewBox="0 0 560 ${oy + dh + 24}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
 function suggestFix(W, L, rows, pitch, type, thk, curCols){
   for(let cols=curCols+1; cols<=80; cols++){
     const mull = cols - 1;
@@ -2736,6 +2763,7 @@ function render(){
       <h2 style="display:flex; justify-content:space-between; align-items:center;">
         <span>Result</span><span class="badge ok">TGF COMPLIANT</span>
       </h2>
+      <div class="schematic">${buildTGFSchematic(W, L)}</div>
       <div class="metrics">
         <div class="metric"><div class="k">Clear Opening</div><div class="v">${fmtMM(W)} × ${fmtMM(L)}</div></div>
         <div class="metric"><div class="k">Glass Cut Size</div><div class="v">${r.glassSizeA} × ${r.glassSizeB}</div></div>
