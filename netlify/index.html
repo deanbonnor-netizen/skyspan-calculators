@@ -254,7 +254,7 @@
   }
 
   /* ---- print / PDF layout (Single Page A4) ---- */
-  .print-only, .print-header, .print-spec { display: none; }
+  .print-only { display: none; }
   
   @media print {
     @page { size: A4 portrait; margin: 6mm 10mm; }
@@ -277,7 +277,7 @@
     .print-header .ph-sub { font-size: 8pt !important; color: #4a5d66 !important; }
     .print-header .ph-meta { text-align: right !important; font-size: 8.5pt !important; color: #1a2b33 !important; }
     
-    .print-spec { margin-bottom: 6px !important; background: #f6f8f9 !important; padding: 4px 8px !important; border-radius: 5px !important; border: 1px solid #dde6ea !important; }
+    .print-spec { display: block !important; margin-bottom: 6px !important; background: #f6f8f9 !important; padding: 4px 8px !important; border-radius: 5px !important; border: 1px solid #dde6ea !important; }
     .print-spec table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5pt !important; }
     .print-spec td { padding: 2px 4px !important; vertical-align: top !important; }
     .print-spec td.k { color: #4a5d66 !important; width: 110px !important; font-weight: 500 !important; }
@@ -2734,9 +2734,17 @@ function render(){
     const r = calculateTGF(PRICES, { W, L, glazing: $('glazing').value, glass: glassObj, instTier, extra });
     
     const printHeader = `
-      <div class="print-header">
-        <div class="print-brand">SKYSPAN — TGF TRAFFICABLE GLASS FLOOR CALCULATOR</div>
-        <div class="print-ref">${jobRef ? 'Job ref: <strong>' + escapeHtml(jobRef) + '</strong>' : 'Internal Quote Estimate'} — ${new Date().toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'})}</div>
+      <div class="print-only">
+        <div class="print-header">
+          <div>
+            <div class="ph-title">Skylight (TGF) — Job Costing Record</div>
+            <div class="ph-sub">Skyspan · internal pricing record · not a customer quote</div>
+          </div>
+          <div class="ph-meta">
+            <div><strong>Job:</strong> ${jobRef || '—'}</div>
+            <div>${new Date().toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'})}</div>
+          </div>
+        </div>
         <div class="print-spec">
           <table>
             <tr>
