@@ -2651,57 +2651,32 @@ function calculateTGF(P, inp) {
 
 function render(){
   populateGlassSelect();
-  const W=parseFloat($('ow').value), L=parseFloat($('ol').value);
-  const pitchDeg = clampPitch(parseFloat($('pitchDeg').value));
-  const pitch = pitchDeg < 30 ? 'low' : 'high';
-  const isGXLMode = (calcMode === 'gxl' || calcMode === 'gxlm');
-  const isTGFMode = (calcMode === 'tgf');
-  const mull = (calcMode === 'gxl' || calcMode === 'tgf') ? 0 : (parseInt($('mullions').value)||0);
-  const trans = (isGXLMode || isTGFMode) ? 0 : (parseInt($('transoms').value)||0);
-  const dg = $('glazing').value==='dg';
-  const mullionSpan = L || 0;
-  const frameOk = (isGXLMode || isTGFMode) ? true : populateFrameSelect(mullionSpan, dg);
-  const subframeIdx = parseInt($('subframe')?.value);
-  const subframe = (PRICES.subframe && !isNaN(subframeIdx) && PRICES.subframe[subframeIdx]) ? PRICES.subframe[subframeIdx] : (PRICES.subframe ? PRICES.subframe[0] : { name: '—' });
+  const W=parseFloat($('ow')?.value) || parseFloat($('planW')?.value);
+  const L=parseFloat($('ol')?.value) || parseFloat($('planL')?.value);
   const res = $('results');
-  const glassAll = activeGlassList();
-  const glassVal = $('glass').value;
-  const availG = availableGlass();
-  const rawGlass = availG.find(g => g.name === glassVal) || glassAll.find(g => g.name === glassVal) || (isFinite(parseInt(glassVal)) ? glassAll[parseInt(glassVal)] : null) || availG[0] || glassAll[0];
-  if(!rawGlass){
-    res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>No glass products available for this selection. Check the Glass Lists tab of the master pricing workbook.</span></div>';
-    return;
-  }
-  const overrideRate = parseFloat($('glassRateOverride')?.value);
-  const isRateOverridden = (!isNaN(overrideRate) && overrideRate > 0);
-  const effectiveRate = isRateOverridden ? overrideRate : rawGlass.rate;
-  const glass = Object.assign({}, rawGlass, { rate: effectiveRate, isOverride: isRateOverridden });
-
-  renderGlassOptions(W, L, trans, pitch, glassAll.indexOf(rawGlass));
-
-  const isSGPane = (glass.glazing || '').toUpperCase() === 'SG' || (Number(glass.lite2) === 0);
-  const paneDesc = isSGPane ? 'single laminated glass pane' : 'inner lite';
-  $('glassHint').textContent = `AS 1288 check uses the ${glass.type==='lam_annealed'?'laminated annealed':'laminated heat-strengthened'} ${paneDesc} at ${glass.thk} mm.`;
-
-  if(!W || !L){ res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width, length, and mullion counts to price the job.</span></div>'; return; }
-
-  const extra = {
-    fabRate: $('fabRate')?.value === '' ? null : (parseFloat($('fabRate')?.value)||null),
-    installRate: $('installRate')?.value === '' ? null : (parseFloat($('installRate')?.value)||null),
-    cutCleatsMin: $('cutCleatsMin')?.value === '' ? null : (parseFloat($('cutCleatsMin')?.value)||null),
-    weldCleatsMin: $('weldCleatsMin')?.value === '' ? null : (parseFloat($('weldCleatsMin')?.value)||null),
-    paintMin: $('paintMin')?.value === '' ? null : (parseFloat($('paintMin')?.value)||null)
-  };
 
   if (calcMode === 'tgf') {
+    if(!W || !L || isNaN(W) || isNaN(L)){
+      res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width and length to price the job.</span></div>';
+      return;
+    }
+
+    const dg = $('glazing').value==='dg';
     const glassDesc = ($('tgfGlassDesc')?.value || '').trim() || (dg ? 'Double Glazed Trafficable Floor Glass' : 'Single Glazed Trafficable Floor Glass');
     const overrideRate = parseFloat($('glassRateOverride')?.value);
     const glassRate = (!isNaN(overrideRate) && overrideRate > 0) ? overrideRate : 0;
 
     const glassObj = { name: glassDesc, rate: glassRate, isOverride: !isNaN(overrideRate) && overrideRate > 0, glazing: dg ? 'DG' : 'SG' };
     const instTier = $('tgfInstTier')?.value || 'Small';
-
     const jobRef = ($('jobRef')?.value || '').trim();
+
+    const extra = {
+      fabRate: $('fabRate')?.value === '' ? null : (parseFloat($('fabRate')?.value)||null),
+      installRate: $('installRate')?.value === '' ? null : (parseFloat($('installRate')?.value)||null),
+      cutCleatsMin: $('cutCleatsMin')?.value === '' ? null : (parseFloat($('cutCleatsMin')?.value)||null),
+      weldCleatsMin: $('weldCleatsMin')?.value === '' ? null : (parseFloat($('weldCleatsMin')?.value)||null),
+      paintMin: $('paintMin')?.value === '' ? null : (parseFloat($('paintMin')?.value)||null)
+    };
 
     if (glassRate <= 0) {
       res.innerHTML = `
@@ -2795,6 +2770,37 @@ function render(){
     $('footnote').innerHTML = `TGF costing engine ported from Skyspan Trafficable Glass Floor Templates (TGF-SG &amp; TGF-DG). Verified against 500×2000 mm single and double glazed reference builds. Builder/Tender Price is calculated at 55% margin: <strong>${fmtMoney(r.tenderPrice)}</strong>.`;
     return;
   }
+
+  const pitchDeg = clampPitch(parseFloat($('pitchDeg').value));
+  const pitch = pitchDeg < 30 ? 'low' : 'high';
+  const isGXLMode = (calcMode === 'gxl' || calcMode === 'gxlm');
+  const mull = calcMode === 'gxl' ? 0 : (parseInt($('mullions').value)||0);
+  const trans = isGXLMode ? 0 : (parseInt($('transoms').value)||0);
+  const dg = $('glazing').value==='dg';
+  const mullionSpan = L || 0;
+  const frameOk = isGXLMode ? true : populateFrameSelect(mullionSpan, dg);
+  const subframeIdx = parseInt($('subframe')?.value);
+  const subframe = (PRICES.subframe && !isNaN(subframeIdx) && PRICES.subframe[subframeIdx]) ? PRICES.subframe[subframeIdx] : (PRICES.subframe ? PRICES.subframe[0] : { name: '—' });
+  const glassAll = activeGlassList();
+  const glassVal = $('glass').value;
+  const availG = availableGlass();
+  const rawGlass = availG.find(g => g.name === glassVal) || glassAll.find(g => g.name === glassVal) || (isFinite(parseInt(glassVal)) ? glassAll[parseInt(glassVal)] : null) || availG[0] || glassAll[0];
+  if(!rawGlass){
+    res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>No glass products available for this selection. Check the Glass Lists tab of the master pricing workbook.</span></div>';
+    return;
+  }
+  const overrideRate = parseFloat($('glassRateOverride')?.value);
+  const isRateOverridden = (!isNaN(overrideRate) && overrideRate > 0);
+  const effectiveRate = isRateOverridden ? overrideRate : rawGlass.rate;
+  const glass = Object.assign({}, rawGlass, { rate: effectiveRate, isOverride: isRateOverridden });
+
+  renderGlassOptions(W, L, trans, pitch, glassAll.indexOf(rawGlass));
+
+  const isSGPane = (glass.glazing || '').toUpperCase() === 'SG' || (Number(glass.lite2) === 0);
+  const paneDesc = isSGPane ? 'single laminated glass pane' : 'inner lite';
+  $('glassHint').textContent = `AS 1288 check uses the ${glass.type==='lam_annealed'?'laminated annealed':'laminated heat-strengthened'} ${paneDesc} at ${glass.thk} mm.`;
+
+  if(!W || !L){ res.innerHTML = '<div class="flag warn"><span class="ic">○</span><span>Enter width, length, and mullion counts to price the job.</span></div>'; return; }
 
   const cols=mull+1, rows=trans+1;
   const clearW = (W - mull * 50) / cols;
