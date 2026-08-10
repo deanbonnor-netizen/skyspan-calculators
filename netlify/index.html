@@ -440,9 +440,13 @@
               <option value="dg" selected>Double glazed</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field" id="glassSelectField">
             <label>Glass product</label>
             <select id="glass"></select>
+          </div>
+          <div class="field" id="tgfGlassDescField" style="display:none;">
+            <label>Glass product / spec</label>
+            <input type="text" id="tgfGlassDesc" placeholder="e.g. 54.56mm Custom Heat-Treated Laminate IGU" oninput="render()" onchange="render()">
           </div>
           <div class="field" id="thermalCapField" style="display:none;">
             <label>Cap Type</label>
@@ -460,7 +464,7 @@
             </select>
           </div>
           <div class="field" id="glassOverrideField">
-            <label>Glass Rate Override <span class="unit">$/m²</span></label>
+            <label id="glassOverrideLabel">Glass Rate Override <span class="unit">$/m²</span></label>
             <input type="number" id="glassRateOverride" placeholder="Standard rate" min="0" step="1" oninput="render()" onchange="render()">
           </div>
           <div class="field full" id="advFlashingToggleRow" style="display:none; margin-top:4px;">
@@ -2075,6 +2079,11 @@ function fitsEnvelope(panelW, panelL, maxA, maxB){
 function renderGlassOptions(W, L, trans, pitch, selectedIdx){
   const el = $('glassOptions');
   if(!el) return;
+  if (calcMode === 'tgf') {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'block';
   const list = availableGlass();
   const all = activeGlassList();
   const isGXLSingle = (calcMode === 'gxl');
@@ -2434,6 +2443,11 @@ function setCalcMode(mode){
   const sizeHint       = $('sizeHint');
   const actualLbl      = $('actualSizeLabel');
 
+  const glassSelFld    = $('glassSelectField');
+  const tgfGlassDescFld= $('tgfGlassDescField');
+  const glassOvLbl     = $('glassOverrideLabel');
+  const glassOvInput   = $('glassRateOverride');
+
   if(mode === 'tgf'){
     if(appTitle)  appTitle.textContent = 'TGF Trafficable Glass Floor Calculator';
     if(appSub)    appSub.textContent   = 'Trafficable glass floor layout, material & labour costing — Skyspan';
@@ -2443,6 +2457,12 @@ function setCalcMode(mode){
     if(sizeHint)  sizeHint.style.display  = 'none';
     if(actualLbl) actualLbl.innerHTML     = 'Clear opening <span class="unit">W × L mm</span>';
     if($('pitchDeg')) $('pitchDeg').value = 0;
+
+    if(glassSelFld)    glassSelFld.style.display    = 'none';
+    if(tgfGlassDescFld) tgfGlassDescFld.style.display = 'block';
+    if(glassOvLbl)     glassOvLbl.innerHTML         = 'Glass Rate <span class="unit">$/m²</span>';
+    if(glassOvInput)   glassOvInput.placeholder     = 'e.g. 850';
+
     if(thermalCapFld) thermalCapFld.style.display = 'none';
     if(tgfInstFld)    tgfInstFld.style.display    = 'block';
     if(badge)     badge.style.display = 'none';
@@ -2461,6 +2481,11 @@ function setCalcMode(mode){
     if(pitchCell) pitchCell.style.display = 'block';
     if(sizeHint)  sizeHint.style.display  = 'block';
     if(actualLbl) actualLbl.innerHTML     = 'Actual glass <span class="unit">used for costing</span>';
+
+    if(glassSelFld)    glassSelFld.style.display    = 'block';
+    if(tgfGlassDescFld) tgfGlassDescFld.style.display = 'none';
+    if(glassOvLbl)     glassOvLbl.innerHTML         = 'Glass Rate Override <span class="unit">$/m²</span>';
+    if(glassOvInput)   glassOvInput.placeholder     = 'Standard rate';
 
     if(mode === 'gxl'){
       if(appTitle)  appTitle.textContent = 'GXL Skylight Calculator (Single Panel)';
@@ -2669,10 +2694,38 @@ function render(){
   };
 
   if (calcMode === 'tgf') {
+    const glassDesc = ($('tgfGlassDesc')?.value || '').trim() || (dg ? 'Double Glazed Trafficable Floor Glass' : 'Single Glazed Trafficable Floor Glass');
+    const overrideRate = parseFloat($('glassRateOverride')?.value);
+    const glassRate = (!isNaN(overrideRate) && overrideRate > 0) ? overrideRate : 0;
+
+    const glassObj = { name: glassDesc, rate: glassRate, isOverride: !isNaN(overrideRate) && overrideRate > 0, glazing: dg ? 'DG' : 'SG' };
     const instTier = $('tgfInstTier')?.value || 'Small';
-    const r = calculateTGF(PRICES, { W, L, glazing: $('glazing').value, glass, instTier, extra });
-    
+
     const jobRef = ($('jobRef')?.value || '').trim();
+
+    if (glassRate <= 0) {
+      res.innerHTML = `
+        <div class="print-header">
+          <div class="print-brand">SKYSPAN — TGF TRAFFICABLE GLASS FLOOR CALCULATOR</div>
+          <div class="print-ref">${jobRef ? 'Job ref: <strong>' + escapeHtml(jobRef) + '</strong>' : 'Internal Quote Estimate'} — ${new Date().toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'})}</div>
+        </div>
+        <h2 style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Result</span><span class="badge warn">ENTER GLASS RATE</span>
+        </h2>
+        <div class="flag warn" style="padding:16px;">
+          <span class="ic">○</span>
+          <div>
+            <strong>Quoted Glass Rate ($/m²) Required.</strong><br>
+            Please enter the quoted <strong>Glass Rate ($/m²)</strong> for <em>"${escapeHtml(glassDesc)}"</em> in the input box on the left to calculate total job materials, labour, and sell prices.
+          </div>
+        </div>
+      `;
+      $('footnote').innerHTML = 'Enter a quoted Glass Rate ($/m²) to view costing and profit margins.';
+      return;
+    }
+
+    const r = calculateTGF(PRICES, { W, L, glazing: $('glazing').value, glass: glassObj, instTier, extra });
+    
     const printHeader = `
       <div class="print-header">
         <div class="print-brand">SKYSPAN — TGF TRAFFICABLE GLASS FLOOR CALCULATOR</div>
@@ -2688,8 +2741,8 @@ function render(){
               <td class="k">Frame Perimeter</td><td class="v">${r.frameLm.toFixed(2)} L/m</td>
             </tr>
             <tr>
-              <td class="k">Glass product</td><td class="v">${glass.name}</td>
-              <td class="k">Glass Rate</td><td class="v">${fmtMoney(glass.rate)}/m²${glass.isOverride ? ' (Override)' : ''}</td>
+              <td class="k">Glass product</td><td class="v">${escapeHtml(r.glass.name)}</td>
+              <td class="k">Glass Rate</td><td class="v">${fmtMoney(r.glass.rate)}/m²</td>
             </tr>
             <tr>
               <td class="k">Installation Tier</td><td class="v">${r.instTier} Tier (${fmtMoney(r.instCost)})</td>
