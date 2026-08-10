@@ -7,13 +7,24 @@
  * Script Name: Skyspan Calculator Suitelet
  * Script ID: customscript_skyspan_calc_suitelet
  * Deployment ID: customdeploy_skyspan_calc_suitelet
+ *
+ * SETUP NOTE: After uploading index.html to File Cabinet > SuiteScripts > Skyspan,
+ * find its Internal ID (hover over the file name in File Cabinet) and set
+ * SKYSPAN_HTML_FILE_ID below. This avoids permission issues from file searches.
  * 
  * Description: Renders the Skyspan Architectural Skylight & Glass Floor Calculator natively inside NetSuite,
  * pre-loads Opportunity/Estimate transaction data, and handles direct line item & PDF attachment pushes.
  */
 
-define(['N/ui/serverWidget', 'N/file', 'N/record', 'N/search', 'N/encode', 'N/render', 'N/https'],
-function(serverWidget, file, record, search, encode, render, https) {
+/**
+ * !! IMPORTANT: Set this to the internal ID of your index.html in the File Cabinet.
+ * To find it: Documents > Files > File Cabinet > SuiteScripts > Skyspan > hover over index.html
+ * It will show the internal ID in the URL or tooltip, e.g. ?id=12345
+ */
+const SKYSPAN_HTML_FILE_ID = null; // <-- Replace null with e.g. 12345
+
+define(['N/file', 'N/record', 'N/search', 'N/url', 'N/runtime', 'N/log'],
+function(file, record, search, url, runtime, log) {
 
     function onRequest(scriptContext) {
         const req = scriptContext.request;
@@ -54,25 +65,44 @@ function(serverWidget, file, record, search, encode, render, https) {
                 }
             }
 
-            // Load index.html from File Cabinet (Search for index.html in SuiteScripts folder)
+            // Load index.html from File Cabinet
             let htmlContent = '';
             try {
-                const fileSearch = search.create({
-                    type: 'file',
-                    filters: [['name', 'is', 'index.html']],
-                    columns: ['internalid']
-                }).run().getRange({ start: 0, end: 1 });
+                let htmlFileId = SKYSPAN_HTML_FILE_ID;
 
-                if (fileSearch && fileSearch.length > 0) {
-                    const htmlFile = file.load({ id: fileSearch[0].id });
-                    htmlContent = htmlFile.getContents();
-                } else {
-                    res.write('Error: index.html not found in NetSuite File Cabinet. Please upload index.html to File Cabinet /SuiteScripts/Skyspan/.');
+                // If no hardcoded ID, fall back to searching — filter to SuiteScripts folder
+                if (!htmlFileId) {
+                    const fileSearch = search.create({
+                        type: 'file',
+                        filters: [
+                            ['name', 'is', 'index.html'],
+                            'AND',
+                            ['folder.path', 'contains', 'SuiteScripts']
+                        ],
+                        columns: ['internalid']
+                    }).run().getRange({ start: 0, end: 5 });
+
+                    if (fileSearch && fileSearch.length > 0) {
+                        htmlFileId = fileSearch[0].id;
+                    }
+                }
+
+                if (!htmlFileId) {
+                    res.setHeader({ name: 'Content-Type', value: 'text/html; charset=UTF-8' });
+                    res.write('<h2 style="font-family:sans-serif;color:#c00;padding:40px">Setup Required</h2>' +
+                        '<p style="font-family:sans-serif;padding:0 40px">Upload <strong>index.html</strong> to File Cabinet under <strong>SuiteScripts &gt; Skyspan</strong>, then set <code>SKYSPAN_HTML_FILE_ID</code> at the top of the Suitelet script to that file\'s Internal ID.</p>');
                     return;
                 }
+
+                const htmlFile = file.load({ id: htmlFileId });
+                htmlContent = htmlFile.getContents();
+
             } catch (err) {
-                log.error('File Cabinet Search Error', err);
-                res.write('Error loading HTML file from File Cabinet: ' + err.message);
+                log.error('File Cabinet Load Error', err);
+                res.setHeader({ name: 'Content-Type', value: 'text/html; charset=UTF-8' });
+                res.write('<h2 style="font-family:sans-serif;color:#c00;padding:40px">File Access Error</h2>' +
+                    '<p style="font-family:sans-serif;padding:0 40px"><strong>Error:</strong> ' + err.message + '</p>' +
+                    '<p style="font-family:sans-serif;padding:0 40px"><strong>Fix:</strong> Find the Internal ID of <em>index.html</em> in File Cabinet and set <code>SKYSPAN_HTML_FILE_ID</code> at the top of this Suitelet script.</p>');
                 return;
             }
 
