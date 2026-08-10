@@ -401,8 +401,8 @@
         <div class="size-block">
           <div class="size-row" id="planViewRow">
             <div class="size-label">Plan view <span class="unit">as drawn</span></div>
-            <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="planW" min="1" step="10"></div>
-            <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="planL" min="1" step="10"></div>
+            <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="planW" min="1" step="10" oninput="syncFromPlan(); render();"></div>
+            <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="planL" min="1" step="10" oninput="syncFromPlan(); render();"></div>
             <div class="field pitch-cell" id="pitchCell" rowspan="2">
               <label>Roof pitch <span class="unit">degrees</span></label>
               <input type="number" id="pitchDeg" value="3" min="0" max="85" step="0.5">
@@ -411,8 +411,8 @@
           <div class="size-arrow" id="sizeArrow"><span id="sizeDir">↕</span></div>
           <div class="size-row" id="actualSizeRow">
             <div class="size-label" id="actualSizeLabel">Actual glass <span class="unit">used for costing</span></div>
-            <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="ow" min="1" step="10"></div>
-            <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="ol" min="1" step="10"></div>
+            <div class="field"><label>Width <span class="unit">mm</span></label><input type="number" id="ow" min="1" step="10" oninput="syncFromActual(); render();"></div>
+            <div class="field"><label>Length <span class="unit">mm</span></label><input type="number" id="ol" min="1" step="10" oninput="syncFromActual(); render();"></div>
             <div class="field"><div class="pitch-note" id="pitchNote"></div></div>
           </div>
         </div>
@@ -435,7 +435,7 @@
         <div class="field-grid" style="margin-top:16px;">
           <div class="field">
             <label>Glazing</label>
-            <select id="glazing">
+            <select id="glazing" onchange="render();">
               <option value="sg">Single glazed</option>
               <option value="dg" selected>Double glazed</option>
             </select>
@@ -1758,9 +1758,13 @@ function parseGoogleSheetCSV(text) {
   return result.glassLists.STANDARD.length ? result : null;
 }
 
+function getStorage(key){ try { return localStorage.getItem(key); } catch(e){ return null; } }
+function setStorage(key, val){ try { localStorage.setItem(key, val); } catch(e){} }
+function removeStorage(key){ try { localStorage.removeItem(key); } catch(e){} }
+
 async function initPrices(){
   // 1. Fetch live Google Sheet prices
-  const sheetUrl = localStorage.getItem('skyspan_google_sheet_url') || GOOGLE_SHEET_URL;
+  const sheetUrl = getStorage('skyspan_google_sheet_url') || GOOGLE_SHEET_URL;
   if(sheetUrl){
     try {
       const res = await fetch(sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
@@ -1805,17 +1809,17 @@ async function initPrices(){
 }
 
 function promptGoogleSheetUrl(){
-  const current = localStorage.getItem('skyspan_google_sheet_url') || '';
+  const current = getStorage('skyspan_google_sheet_url') || '';
   const url = prompt('Paste your Google Sheet Published CSV URL (File -> Share -> Publish to web -> CSV):', current);
   if(url !== null){
     if(url.trim() === ''){
-      localStorage.removeItem('skyspan_google_sheet_url');
+      removeStorage('skyspan_google_sheet_url');
       alert('Removed Google Sheet link.');
     } else {
       let finalUrl = url.trim();
       if(finalUrl.includes('/pubhtml')) finalUrl = finalUrl.replace('/pubhtml', '/pub?output=csv');
       if(finalUrl.includes('/edit')) finalUrl = finalUrl.replace(/\/edit.*$/, '/export?format=csv');
-      localStorage.setItem('skyspan_google_sheet_url', finalUrl);
+      setStorage('skyspan_google_sheet_url', finalUrl);
       alert('Google Sheet URL saved! Reloading prices...');
     }
     initPrices().then(() => { populateSelects(); render(); });
