@@ -21,7 +21,7 @@
  * To find it: Documents > Files > File Cabinet > SuiteScripts > Skyspan > hover over index.html
  * It will show the internal ID in the URL or tooltip, e.g. ?id=12345
  */
-const SKYSPAN_HTML_FILE_ID = null; // <-- Replace null with e.g. 12345
+const SKYSPAN_HTML_FILE_ID = 6215104; // index.html — NetSuite File Cabinet Internal ID
 
 define(['N/file', 'N/record', 'N/search', 'N/url', 'N/runtime', 'N/log'],
 function(file, record, search, url, runtime, log) {
