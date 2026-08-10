@@ -2737,7 +2737,7 @@ function render(){
   const thermalCap = isGXLMode ? ($('thermalCap').value === 'on') : true;
 
   const packVal = parseFloat($('packagingOverride')?.value);
-  const extra = {
+  Object.assign(extra, {
     instGlaze2Min: parseFloat($('instGlaze2Min')?.value)||0,
     instGlaze2Qty: parseFloat($('instGlaze2Qty')?.value)||0,
     join2Min: parseFloat($('join2Min')?.value)||0,
@@ -2762,7 +2762,7 @@ function render(){
     travelCost: parseFloat($('travelCost')?.value)||0,
     cranageCost: parseFloat($('cranageCost')?.value)||0,
     packaging: isNaN(packVal) ? null : packVal
-  };
+  });
 
   const r = isGXLMode
     ? calculateGXL(PRICES, {
